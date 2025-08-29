@@ -213,10 +213,16 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-96">
+          <TabsList className={`grid w-full ${user?.role === 'admin' ? 'grid-cols-6' : 'grid-cols-4'} lg:w-120`}>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            {user?.role === 'admin' && (
+              <>
+                <TabsTrigger value="admin">Admin Panel</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              </>
+            )}
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
