@@ -295,7 +295,7 @@ const Dashboard = () => {
                 <CardDescription>Common tasks and shortcuts</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Button 
                     onClick={() => navigate('/request/new')}
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-12"
@@ -309,10 +309,27 @@ const Dashboard = () => {
                     Search Records
                   </Button>
                   
-                  <Button variant="outline" className="h-12">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </Button>
+                  {user?.role === 'admin' && (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        className="h-12"
+                        onClick={() => setActiveTab('admin')}
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        Admin Panel
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        className="h-12"
+                        onClick={exportAllRequests}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Export Data
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
