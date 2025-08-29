@@ -434,6 +434,16 @@ const Dashboard = () => {
                         <div className="flex flex-col items-end gap-2">
                           {getStatusBadge(request.status)}
                           <Badge variant="outline">{request.request_type.replace('_', ' ')}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              exportRequestAsPDF(request.id);
+                            }}
+                          >
+                            <FileDown className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
                       
