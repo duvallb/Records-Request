@@ -5,7 +5,7 @@ import "./App.css";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import Dashboard from "./components/Dashboard";
-import RequestForm from "./components/RequestForm";
+import EnhancedRequestForm from "./components/EnhancedRequestForm";
 import RequestDetail from "./components/RequestDetail";
 import { Toaster } from "./components/ui/sonner";
 
@@ -108,7 +108,7 @@ function App() {
               path="/request/new" 
               element={
                 <ProtectedRoute>
-                  <RequestForm />
+                  <EnhancedRequestForm />
                 </ProtectedRoute>
               } 
             />
