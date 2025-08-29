@@ -396,13 +396,24 @@ const Dashboard = () => {
                   <CardTitle>All Requests</CardTitle>
                   <CardDescription>Manage and track your records requests</CardDescription>
                 </div>
-                <Button 
-                  onClick={() => navigate('/request/new')}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Request
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => navigate('/request/new')}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Request
+                  </Button>
+                  {user?.role === 'admin' && (
+                    <Button 
+                      variant="outline"
+                      onClick={exportAllRequests}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
