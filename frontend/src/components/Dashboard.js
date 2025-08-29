@@ -486,11 +486,12 @@ const Dashboard = () => {
                   {notifications.map((notification) => (
                     <div 
                       key={notification.id}
-                      className={`p-4 rounded-lg border transition-colors ${
+                      className={`p-4 rounded-lg border transition-colors cursor-pointer ${
                         notification.is_read 
                           ? 'border-slate-200 bg-slate-50' 
                           : 'border-blue-200 bg-blue-50'
                       }`}
+                      onClick={() => markNotificationRead(notification.id)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
