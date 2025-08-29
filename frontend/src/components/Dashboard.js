@@ -136,6 +136,15 @@ const Dashboard = () => {
     navigate(`/request/${requestId}`);
   };
 
+  const markNotificationRead = async (notificationId) => {
+    try {
+      await axios.put(`${API}/notifications/${notificationId}/read`);
+      fetchDashboardData(); // Refresh notifications
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
