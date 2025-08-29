@@ -156,6 +156,17 @@ const Dashboard = () => {
     );
   }
 
+  // Determine tab configuration based on user role
+  const getTabsList = () => {
+    const baseTabs = ['overview', 'requests', 'notifications', 'profile'];
+    if (user?.role === 'admin') {
+      return [...baseTabs.slice(0, 3), 'admin', 'analytics', baseTabs[3]];
+    }
+    return baseTabs;
+  };
+
+  const tabsConfig = getTabsList();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
