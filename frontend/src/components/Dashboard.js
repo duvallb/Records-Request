@@ -519,6 +519,18 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
+          {user?.role === 'admin' && (
+            <>
+              <TabsContent value="admin" className="space-y-6">
+                <AdminPanel />
+              </TabsContent>
+              
+              <TabsContent value="analytics" className="space-y-6">
+                <Analytics />
+              </TabsContent>
+            </>
+          )}
+
           <TabsContent value="profile" className="space-y-6">
             <Card className="glass border-0 shadow-lg">
               <CardHeader>
