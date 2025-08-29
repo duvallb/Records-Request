@@ -426,7 +426,7 @@ const Dashboard = () => {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-slate-800 mb-1">{request.title}</h3>
-                          <p className="text-slate-600 mb-2">{request.description}</p>
+                          <p className="text-slate-600 mb-2">{request.description.substring(0, 150)}...</p>
                           <p className="text-sm text-slate-500">
                             Submitted on {formatDate(request.created_at)}
                           </p>
