@@ -309,9 +309,8 @@ class EnhancedPoliceRecordsAPITester:
         success, response = self.run_test(
             "Assign request to staff",
             "PUT",
-            f"requests/{request_id}/assign",
+            f"requests/{request_id}/assign?staff_id={staff_id}",
             200,
-            data={"staff_id": staff_id},
             token=self.tokens['admin']
         )
         
