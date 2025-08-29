@@ -5,8 +5,10 @@ import { AuthContext } from '../App';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Label } from './ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import Analytics from './Analytics';
+import AdminPanel from './AdminPanel';
 import { 
   Shield, 
   FileText, 
@@ -19,7 +21,10 @@ import {
   LogOut,
   Users,
   Settings,
-  Search
+  Search,
+  BarChart3,
+  Download,
+  FileDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
