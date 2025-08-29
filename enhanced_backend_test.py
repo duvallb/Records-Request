@@ -321,9 +321,8 @@ class EnhancedPoliceRecordsAPITester:
             success, response = self.run_test(
                 "Update request status (staff)",
                 "PUT",
-                f"requests/{request_id}/status",
+                f"requests/{request_id}/status?new_status=in_progress",
                 200,
-                data={"new_status": "in_progress"},
                 token=self.tokens['staff']
             )
             
