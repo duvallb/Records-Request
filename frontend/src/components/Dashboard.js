@@ -61,6 +61,48 @@ const Dashboard = () => {
     }
   };
 
+  const exportRequestAsPDF = async (requestId) => {
+    try {
+      const response = await axios.get(`${API}/export/request/${requestId}/pdf`, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `request_${requestId.substring(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Request exported as PDF');
+    } catch (error) {
+      toast.error('Failed to export request');
+    }
+  };
+
+  const exportAllRequests = async () => {
+    try {
+      const response = await axios.get(`${API}/export/requests/csv`, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'requests_export.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success('All requests exported as CSV');
+    } catch (error) {
+      toast.error('Failed to export requests');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       'pending': { variant: 'destructive', label: 'Pending' },
