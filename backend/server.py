@@ -41,7 +41,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # JWT and Password settings
-SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "your-secret-key-here")
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "your-super-secret-jwt-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -124,6 +124,9 @@ class RecordRequest(BaseModel):
     request_type: RequestType
     status: RequestStatus = RequestStatus.PENDING
     assigned_staff_id: Optional[str] = None
+    assigned_staff_name: Optional[str] = None
+    requester_name: Optional[str] = None
+    requester_email: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     priority: str = "medium"
@@ -164,6 +167,17 @@ class AnalyticsData(BaseModel):
     average_resolution_time: float
     monthly_trends: List[dict]
     staff_workload: List[dict]
+
+class RequestAssignment(BaseModel):
+    request_id: str
+    staff_id: str
+
+class StaffUser(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    assigned_requests: int
+    completed_requests: int
 
 # Helper functions
 def verify_password(plain_password, hashed_password):
@@ -217,7 +231,10 @@ async def send_email(to_email: str, subject: str, content: str, html_content: st
     """Send email notification"""
     try:
         if not SMTP_USERNAME or not SMTP_PASSWORD:
-            print(f"Email would be sent to {to_email}: {subject}")
+            print(f"📧 Email would be sent to {to_email}")
+            print(f"📧 Subject: {subject}")
+            print(f"📧 Content: {content}")
+            print("=" * 50)
             return True  # Skip actual sending in development
             
         message = EmailMessage()
@@ -297,7 +314,7 @@ async def send_status_update_notification(request: RecordRequest, user: dict, ol
     
     await send_email(user["email"], subject, content)
 
-# PDF Generation
+# PDF Generation function (keeping existing implementation)
 def generate_request_pdf(request_data: dict, user_data: dict, messages: List[dict] = None):
     """Generate PDF report for a request"""
     buffer = io.BytesIO()
@@ -425,7 +442,118 @@ async def login(user_data: UserLogin):
     
     return Token(access_token=access_token, token_type="bearer", user=user_obj)
 
-# File Upload Routes
+# ADMIN ROUTES - NEW
+@api_router.post("/admin/create-staff", response_model=User)
+async def create_staff_user(user_data: UserCreate, current_user: User = Depends(get_current_user)):
+    """Admin-only route to create staff users"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can create staff users")
+    
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Hash password and create user
+    hashed_password = get_password_hash(user_data.password)
+    user_dict = user_data.dict()
+    del user_dict["password"]
+    
+    new_user = User(**user_dict)
+    user_doc = prepare_for_mongo(new_user.dict())
+    user_doc["hashed_password"] = hashed_password
+    
+    await db.users.insert_one(user_doc)
+    
+    return new_user
+
+@api_router.get("/admin/staff-members", response_model=List[StaffUser])
+async def get_staff_members(current_user: User = Depends(get_current_user)):
+    """Get all staff members with their workload"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can view staff members")
+    
+    staff_users = await db.users.find({"role": "staff"}).to_list(None)
+    staff_list = []
+    
+    for staff in staff_users:
+        assigned_count = await db.requests.count_documents({"assigned_staff_id": staff["id"]})
+        completed_count = await db.requests.count_documents({
+            "assigned_staff_id": staff["id"],
+            "status": "completed"
+        })
+        
+        staff_list.append(StaffUser(
+            id=staff["id"],
+            full_name=staff["full_name"],
+            email=staff["email"],
+            assigned_requests=assigned_count,
+            completed_requests=completed_count
+        ))
+    
+    return staff_list
+
+@api_router.get("/admin/requests-master-list")
+async def get_master_requests_list(current_user: User = Depends(get_current_user)):
+    """Get complete master list of all requests with full details"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can view master requests list")
+    
+    # Get all requests
+    requests = await db.requests.find().to_list(None)
+    
+    # Enhance with user and staff information
+    enhanced_requests = []
+    for req in requests:
+        # Get requester information
+        requester = await db.users.find_one({"id": req["user_id"]})
+        
+        # Get assigned staff information if assigned
+        assigned_staff = None
+        if req.get("assigned_staff_id"):
+            assigned_staff = await db.users.find_one({"id": req["assigned_staff_id"]})
+        
+        # Get file count
+        file_count = await db.files.count_documents({"request_id": req["id"]})
+        
+        # Get message count
+        message_count = await db.messages.count_documents({"request_id": req["id"]})
+        
+        enhanced_request = {
+            **req,
+            "requester_name": requester["full_name"] if requester else "Unknown",
+            "requester_email": requester["email"] if requester else "Unknown",
+            "assigned_staff_name": assigned_staff["full_name"] if assigned_staff else None,
+            "assigned_staff_email": assigned_staff["email"] if assigned_staff else None,
+            "file_count": file_count,
+            "message_count": message_count
+        }
+        enhanced_requests.append(enhanced_request)
+    
+    return enhanced_requests
+
+@api_router.get("/admin/unassigned-requests")
+async def get_unassigned_requests(current_user: User = Depends(get_current_user)):
+    """Get all unassigned requests for admin assignment"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can view unassigned requests")
+    
+    unassigned = await db.requests.find({"assigned_staff_id": None}).to_list(None)
+    
+    # Enhance with requester information
+    enhanced_requests = []
+    for req in unassigned:
+        requester = await db.users.find_one({"id": req["user_id"]})
+        req["requester_name"] = requester["full_name"] if requester else "Unknown"
+        req["requester_email"] = requester["email"] if requester else "Unknown"
+        enhanced_requests.append(req)
+    
+    return enhanced_requests
+
+# File Upload Routes (existing)
 @api_router.post("/upload/{request_id}")
 async def upload_file(request_id: str, file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     # Verify user has access to this request
@@ -575,37 +703,49 @@ async def get_request(request_id: str, current_user: User = Depends(get_current_
     
     return request_obj
 
-@api_router.put("/requests/{request_id}/assign")
-async def assign_request(request_id: str, staff_id: str, current_user: User = Depends(get_current_user)):
+@api_router.post("/requests/{request_id}/assign", response_model=dict)
+async def assign_request(request_id: str, assignment: RequestAssignment, current_user: User = Depends(get_current_user)):
+    """Assign a request to a staff member"""
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can assign requests")
     
-    # Get original request
+    # Validate request exists
     original_request = await db.requests.find_one({"id": request_id})
     if not original_request:
         raise HTTPException(status_code=404, detail="Request not found")
     
+    # Validate staff user exists
+    staff_user = await db.users.find_one({"id": assignment.staff_id, "role": "staff"})
+    if not staff_user:
+        raise HTTPException(status_code=404, detail="Staff user not found")
+    
     # Update request
     await db.requests.update_one(
         {"id": request_id},
-        {"$set": {"assigned_staff_id": staff_id, "status": "assigned", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "assigned_staff_id": assignment.staff_id,
+            "status": "assigned",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     
     # Create notification for assigned staff
-    staff_user = await db.users.find_one({"id": staff_id})
-    if staff_user:
-        notification = Notification(
-            user_id=staff_id,
-            title="Request Assigned",
-            message=f"You have been assigned request: {original_request['title']}"
-        )
-        await db.notifications.insert_one(prepare_for_mongo(notification.dict()))
-        
-        # Send email notification
-        request_obj = RecordRequest(**original_request)
-        await send_assignment_notification(request_obj, staff_user)
+    notification = Notification(
+        user_id=assignment.staff_id,
+        title="Request Assigned",
+        message=f"You have been assigned request: {original_request['title']}"
+    )
+    await db.notifications.insert_one(prepare_for_mongo(notification.dict()))
     
-    return {"message": "Request assigned successfully"}
+    # Send email notification
+    request_obj = RecordRequest(**original_request)
+    await send_assignment_notification(request_obj, staff_user)
+    
+    return {
+        "message": "Request assigned successfully",
+        "assigned_to": staff_user["full_name"],
+        "request_id": request_id
+    }
 
 @api_router.put("/requests/{request_id}/status")
 async def update_request_status(request_id: str, new_status: RequestStatus, current_user: User = Depends(get_current_user)):
@@ -681,21 +821,28 @@ async def export_requests_csv(current_user: User = Depends(get_current_user)):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can export all requests")
     
-    # Get all requests
+    # Get all requests with enhanced details
     requests = await db.requests.find().to_list(None)
     
-    # Convert to DataFrame
+    # Convert to DataFrame with full details
     df_data = []
     for req in requests:
-        user = await db.users.find_one({"id": req["user_id"]})
+        requester = await db.users.find_one({"id": req["user_id"]})
+        assigned_staff = None
+        if req.get("assigned_staff_id"):
+            assigned_staff = await db.users.find_one({"id": req["assigned_staff_id"]})
+        
         df_data.append({
             "Request ID": req["id"],
             "Title": req["title"],
+            "Description": req["description"][:100] + "..." if len(req["description"]) > 100 else req["description"],
             "Type": req["request_type"],
             "Status": req["status"],
             "Priority": req["priority"],
-            "Requester": user["full_name"] if user else "Unknown",
-            "Requester Email": user["email"] if user else "Unknown",
+            "Requester Name": requester["full_name"] if requester else "Unknown",
+            "Requester Email": requester["email"] if requester else "Unknown",
+            "Assigned Staff": assigned_staff["full_name"] if assigned_staff else "Unassigned",
+            "Staff Email": assigned_staff["email"] if assigned_staff else "",
             "Created At": req["created_at"],
             "Updated At": req["updated_at"]
         })
@@ -710,10 +857,10 @@ async def export_requests_csv(current_user: User = Depends(get_current_user)):
     return StreamingResponse(
         io.StringIO(csv_content),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=requests_export.csv"}
+        headers={"Content-Disposition": "attachment; filename=master_requests_export.csv"}
     )
 
-# Analytics Routes
+# Analytics Routes (existing)
 @api_router.get("/analytics/dashboard", response_model=AnalyticsData)
 async def get_analytics_dashboard(current_user: User = Depends(get_current_user)):
     if current_user.role != UserRole.ADMIN:
@@ -804,7 +951,7 @@ async def get_analytics_dashboard(current_user: User = Depends(get_current_user)
         staff_workload=staff_workload
     )
 
-# Message Routes
+# Message Routes (existing)
 @api_router.post("/messages", response_model=Message)
 async def create_message(message_data: MessageCreate, current_user: User = Depends(get_current_user)):
     # Verify user has access to this request
@@ -849,7 +996,7 @@ async def get_messages(request_id: str, current_user: User = Depends(get_current
     messages = await db.messages.find({"request_id": request_id}).sort("created_at", 1).to_list(None)
     return [Message(**msg) for msg in messages]
 
-# Notification Routes
+# Notification Routes (existing)
 @api_router.get("/notifications", response_model=List[Notification])
 async def get_notifications(current_user: User = Depends(get_current_user)):
     notifications = await db.notifications.find({"user_id": current_user.id}).sort("created_at", -1).to_list(None)
@@ -863,7 +1010,7 @@ async def mark_notification_read(notification_id: str, current_user: User = Depe
     )
     return {"message": "Notification marked as read"}
 
-# Dashboard Routes
+# Dashboard Routes (existing)
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     if current_user.role == UserRole.ADMIN:
