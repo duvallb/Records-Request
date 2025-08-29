@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Alert, AlertDescription } from './ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { 
   ArrowLeft, 
   FileText, 
@@ -18,17 +19,23 @@ import {
   MessageCircle, 
   Send,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Settings,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import FileManager from './FileManager';
 
 const RequestDetail = () => {
   const [request, setRequest] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [files, setFiles] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   
   const { id } = useParams();
   const { user, API } = useContext(AuthContext);
@@ -37,6 +44,7 @@ const RequestDetail = () => {
   useEffect(() => {
     fetchRequestDetails();
     fetchMessages();
+    fetchFiles();
   }, [id]);
 
   const fetchRequestDetails = async () => {
@@ -61,6 +69,15 @@ const RequestDetail = () => {
     }
   };
 
+  const fetchFiles = async () => {
+    try {
+      const response = await axios.get(`${API}/files/${id}`);
+      setFiles(response.data);
+    } catch (error) {
+      console.error('Files fetch error:', error);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -80,6 +97,44 @@ const RequestDetail = () => {
       console.error('Send message error:', error);
     } finally {
       setSendingMessage(false);
+    }
+  };
+
+  const handleStatusUpdate = async (newStatus) => {
+    setUpdatingStatus(true);
+    try {
+      await axios.put(`${API}/requests/${id}/status`, null, {
+        params: { new_status: newStatus }
+      });
+      
+      toast.success('Status updated successfully');
+      fetchRequestDetails(); // Refresh request data
+    } catch (error) {
+      toast.error('Failed to update status');
+      console.error('Status update error:', error);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const exportRequestAsPDF = async () => {
+    try {
+      const response = await axios.get(`${API}/export/request/${id}/pdf`, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `request_${id.substring(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Request exported as PDF');
+    } catch (error) {
+      toast.error('Failed to export request');
     }
   };
 
@@ -119,6 +174,11 @@ const RequestDetail = () => {
     if (diffInHours < 24) return `${Math.floor(diffInHours)} hours ago`;
     if (diffInHours < 168) return `${Math.floor(diffInHours / 24)} days ago`;
     return formatDate(dateString);
+  };
+
+  const canUpdateStatus = () => {
+    return user?.role === 'admin' || 
+           (user?.role === 'staff' && request?.assigned_staff_id === user?.id);
   };
 
   if (loading) {
@@ -188,7 +248,18 @@ const RequestDetail = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  {getStatusBadge(request.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(request.status)}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportRequestAsPDF}
+                      className="ml-2"
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      PDF
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               
@@ -226,6 +297,33 @@ const RequestDetail = () => {
                   </div>
                 </div>
 
+                {/* Status Management for Staff/Admin */}
+                {canUpdateStatus() && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <Label className="text-sm font-medium text-blue-800 mb-2 block flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      Update Status
+                    </Label>
+                    <div className="flex gap-2">
+                      <Select 
+                        onValueChange={handleStatusUpdate}
+                        disabled={updatingStatus}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Change status..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="assigned">Assigned</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="denied">Denied</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {updatingStatus && <div className="spinner"></div>}
+                    </div>
+                  </div>
+                )}
+
                 {request.assigned_staff_id && (
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <div className="flex items-center gap-2 text-blue-800">
@@ -237,6 +335,27 @@ const RequestDetail = () => {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* File Management */}
+            <Card className="glass border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Documents & Files
+                </CardTitle>
+                <CardDescription>
+                  Upload and manage files related to this request
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FileManager 
+                  requestId={id}
+                  files={files}
+                  onFilesUpdate={fetchFiles}
+                  disabled={request.status === 'completed' || request.status === 'denied'}
+                />
               </CardContent>
             </Card>
 
@@ -395,6 +514,13 @@ const RequestDetail = () => {
                   <p className="mt-1 text-sm text-slate-800 capitalize">
                     {request.request_type.replace('_', ' ')}
                   </p>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Files Attached
+                  </Label>
+                  <p className="mt-1 text-sm text-slate-800">{files.length}</p>
                 </div>
               </CardContent>
             </Card>
