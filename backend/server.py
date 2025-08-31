@@ -1048,6 +1048,46 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
             "pending_requests": pending_requests
         }
 
+# Test email endpoint for debugging
+@api_router.post("/test-email")
+async def test_email_sending(current_user: User = Depends(get_current_user)):
+    """Test email sending functionality"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    test_subject = "Police Records System - Email Test"
+    test_content = f"""
+Hello Administrator,
+
+This is a test email from the Police Records Request System to verify that email notifications are working correctly.
+
+Test Details:
+- Sent at: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}
+- From: {FROM_EMAIL}
+- SMTP Server: {SMTP_SERVER}:{SMTP_PORT}
+- Username: {SMTP_USERNAME}
+
+If you receive this email, the notification system is working properly.
+
+Best regards,
+Police Records System
+    """
+    
+    try:
+        success = await send_email(
+            to_email=FROM_EMAIL,  # Send to the administrator email
+            subject=test_subject,
+            content=test_content
+        )
+        
+        if success:
+            return {"message": "Test email sent successfully", "sent_to": FROM_EMAIL}
+        else:
+            return {"message": "Failed to send test email", "error": "Check server logs"}
+    except Exception as e:
+        logger.error(f"Test email failed: {str(e)}")
+        return {"message": "Test email failed", "error": str(e)}
+
 # Include the router in the main app
 app.include_router(api_router)
 
