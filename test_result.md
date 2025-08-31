@@ -144,6 +144,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ All email notification workflows tested and working: 1) New request creation triggers admin notification emails, 2) Request assignment triggers staff notification emails, 3) Status updates trigger user notification emails. All API endpoints (POST /api/requests, POST /api/requests/{id}/assign, PUT /api/requests/{id}/status) successfully trigger email notifications via Dreamhost SMTP."
+        - working: true
+          agent: "user"
+          comment: "User confirmed email system working. All notification types functioning: new requests, assignments, status updates"
 
 metadata:
   created_by: "main_agent"
