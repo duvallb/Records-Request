@@ -266,9 +266,8 @@ class EmailNotificationTester:
         success, response = self.run_test(
             "Update request status (should send user notification email)",
             "PUT",
-            f"requests/{request_id}/status",
+            f"requests/{request_id}/status?new_status=in_progress",
             200,
-            data="in_progress",  # Send status as string in request body
             token=self.tokens['staff']
         )
         
