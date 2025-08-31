@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class PoliceRecordsAPITester:
-    def __init__(self, base_url="https://law-records-portal.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://foia-request.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tokens = {}  # Store tokens for different users
         self.users = {}   # Store user data
