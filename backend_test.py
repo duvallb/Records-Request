@@ -318,11 +318,17 @@ class PoliceRecordsAPITester:
         request_id = self.requests_created[0]
         staff_id = self.users['staff']['id']
         
+        assignment_data = {
+            "request_id": request_id,
+            "staff_id": staff_id
+        }
+        
         success, response = self.run_test(
             "Assign request to staff",
-            "PUT",
-            f"requests/{request_id}/assign?staff_id={staff_id}",
+            "POST",
+            f"requests/{request_id}/assign",
             200,
+            data=assignment_data,
             token=self.tokens['admin']
         )
 
