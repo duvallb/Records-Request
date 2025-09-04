@@ -716,6 +716,28 @@ const AdminPanel = () => {
                           <div>Files: {request.file_count || 0}</div>
                           <div>Messages: {request.message_count || 0}</div>
                         </td>
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            {request.status !== 'cancelled' && request.status !== 'completed' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCancelRequest(request.id, request.title)}
+                                className="text-yellow-600 hover:text-yellow-700 border-yellow-300 hover:border-yellow-400"
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteRequest(request.id, request.title)}
+                              className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
