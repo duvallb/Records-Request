@@ -460,32 +460,7 @@ async def login(user_data: UserLogin):
     return Token(access_token=access_token, token_type="bearer", user=user_obj)
 
 # ADMIN ROUTES - NEW
-@api_router.post("/admin/create-staff", response_model=User)
-async def create_staff_user(user_data: UserCreate, current_user: User = Depends(get_current_user)):
-    """Admin-only route to create staff users"""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Only admins can create staff users")
-    
-    # Check if user already exists
-    existing_user = await db.users.find_one({"email": user_data.email})
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-    
-    # Hash password and create user
-    hashed_password = get_password_hash(user_data.password)
-    user_dict = user_data.dict()
-    del user_dict["password"]
-    
-    new_user = User(**user_dict)
-    user_doc = prepare_for_mongo(new_user.dict())
-    user_doc["hashed_password"] = hashed_password
-    
-    await db.users.insert_one(user_doc)
-    
-    return new_user
+
 
 @api_router.get("/admin/staff-members", response_model=List[StaffUser])
 async def get_staff_members(current_user: User = Depends(get_current_user)):
