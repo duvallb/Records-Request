@@ -18,8 +18,14 @@ const RequestForm = () => {
     description: '',
     request_type: '',
     case_number: '',
-    priority: 'medium'
+    priority: 'medium',
+    // Body camera specific fields
+    incident_date: '',
+    incident_time: '',
+    incident_location: '',
+    officer_names: ''
   });
+  const [costAcknowledged, setCostAcknowledged] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
