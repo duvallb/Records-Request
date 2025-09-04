@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
 import "./App.css";
+import WelcomePage from "./components/WelcomePage";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import Dashboard from "./components/Dashboard";
-import EnhancedRequestForm from "./components/EnhancedRequestForm";
+import RequestForm from "./components/RequestForm";
 import RequestDetail from "./components/RequestDetail";
 import { Toaster } from "./components/ui/sonner";
 
