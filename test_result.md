@@ -29,6 +29,41 @@
 ##         -comment: "Detailed comment about status"
 ##
 ## frontend:
+  - task: "Registration Form Security Fix"
+    implemented: true
+    working: "pending_test"
+    file: "/app/frontend/src/components/RegisterPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "pending_test"
+          agent: "main"
+          comment: "Fixed registration form to only show 'Citizen' role option. Removed staff and admin role selection from public registration. Added security note that admin/staff accounts are created by administrators."
+
+  - task: "Admin Panel User Management"
+    implemented: true
+    working: "pending_test"
+    file: "/app/frontend/src/components/AdminPanel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "pending_test"
+          agent: "main"
+          comment: "Added new User Management tab to admin panel. Includes functionality to update user roles, change email addresses, view all users with their details. Added calls to new admin API endpoints for complete user management."
+
+  - task: "Admin Panel Request Display Fix"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/AdminPanel.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reports request panel showing zero requests after two were submitted. Admin panel not displaying requests correctly."
 ##   - task: "Task name"
 ##     implemented: true
 ##     working: true  # or false or "NA"
