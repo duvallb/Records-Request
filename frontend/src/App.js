@@ -82,6 +82,14 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route 
+              path="/" 
+              element={
+                <PublicRoute>
+                  <WelcomePage />
+                </PublicRoute>
+              } 
+            />
+            <Route 
               path="/login" 
               element={
                 <PublicRoute>
@@ -109,7 +117,7 @@ function App() {
               path="/request/new" 
               element={
                 <ProtectedRoute>
-                  <EnhancedRequestForm />
+                  <RequestForm />
                 </ProtectedRoute>
               } 
             />
@@ -121,7 +129,6 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="/" element={<Navigate to="/dashboard" />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" />
