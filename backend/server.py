@@ -541,23 +541,114 @@ async def get_master_requests_list(current_user: User = Depends(get_current_user
 
 @api_router.get("/admin/unassigned-requests")
 async def get_unassigned_requests(current_user: User = Depends(get_current_user)):
-    """Get all unassigned requests for admin assignment"""
+    """Get all unassigned requests"""
     if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Only admins can view unassigned requests")
+        raise HTTPException(status_code=403, detail="Admin access required")
     
+    # Get unassigned requests
     unassigned = await db.requests.find({"assigned_staff_id": None}).to_list(None)
     
-    # Enhance with requester information
-    enhanced_requests = []
-    for req in unassigned:
-        requester = await db.users.find_one({"id": req["user_id"]})
-        # Filter out MongoDB ObjectId and other non-serializable fields
-        clean_req = {k: v for k, v in req.items() if k != '_id'}
-        clean_req["requester_name"] = requester["full_name"] if requester else "Unknown"
-        clean_req["requester_email"] = requester["email"] if requester else "Unknown"
-        enhanced_requests.append(clean_req)
+    unassigned_list = []
+    for request in unassigned:
+        # Get requester info
+        requester = await db.users.find_one({"id": request["user_id"]})
+        
+        unassigned_list.append({
+            "id": request["id"],
+            "title": request["title"],
+            "description": request["description"],
+            "status": request["status"],
+            "priority": request["priority"],
+            "request_type": request["request_type"],
+            "created_at": request["created_at"],
+            "requester_name": requester["full_name"] if requester else "Unknown",
+            "requester_email": requester["email"] if requester else "Unknown"
+        })
     
-    return enhanced_requests
+    return unassigned_list
+
+@api_router.delete("/admin/requests/{request_id}")
+async def delete_request(request_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a request - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if request exists
+    request = await db.requests.find_one({"id": request_id})
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Delete associated files first
+    await db.files.delete_many({"request_id": request_id})
+    
+    # Delete associated messages
+    await db.messages.delete_many({"request_id": request_id})
+    
+    # Delete the request
+    result = await db.requests.delete_one({"id": request_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    return {"message": "Request deleted successfully"}
+
+@api_router.put("/admin/requests/{request_id}/cancel")
+async def cancel_request(request_id: str, reason: dict, current_user: User = Depends(get_current_user)):
+    """Cancel a request - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    cancellation_reason = reason.get("reason", "Cancelled by administrator")
+    
+    # Update request status to cancelled
+    result = await db.requests.update_one(
+        {"id": request_id},
+        {
+            "$set": {
+                "status": "cancelled",
+                "cancellation_reason": cancellation_reason,
+                "cancelled_at": datetime.now(timezone.utc).isoformat(),
+                "cancelled_by": current_user.id
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Get request and user info for notification
+    request_obj = await db.requests.find_one({"id": request_id})
+    user = await db.users.find_one({"id": request_obj["user_id"]})
+    
+    # Send cancellation notification to user
+    if user and user.get("email"):
+        user_email = user.get("email", "")
+        fake_domains = ["@example.com", "@test.com", "@testdomain.com", "@fake.com", "@dummy.com"]
+        is_fake_email = any(user_email.endswith(domain) for domain in fake_domains)
+        
+        if not is_fake_email and "@" in user_email and "." in user_email:
+            subject = f"Request Cancelled: {request_obj['title']}"
+            content = f"""
+Your records request has been cancelled.
+
+Request Details:
+- Title: {request_obj['title']}
+- Request ID: {request_id}
+- Cancellation Reason: {cancellation_reason}
+- Cancelled Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}
+
+If you have questions about this cancellation, please contact the Records Division at (216) 491-1220.
+
+Best regards,
+Shaker Heights Police Department
+            """
+            try:
+                await send_email(user_email, subject, content)
+                logger.info(f"Cancellation notification sent to user: {user_email}")
+            except Exception as e:
+                logger.error(f"Failed to send cancellation email: {str(e)}")
+    
+    return {"message": "Request cancelled successfully", "reason": cancellation_reason}
 
 # File Upload Routes (existing)
 @api_router.post("/upload/{request_id}")
