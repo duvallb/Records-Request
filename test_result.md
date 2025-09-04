@@ -271,8 +271,10 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
-  stuck_tasks: []
+  current_focus: 
+    - "Admin Panel Request Display Fix"
+  stuck_tasks: 
+    - "Admin Panel Request Display Fix"
   test_all: false
   test_priority: "high_first"
 
