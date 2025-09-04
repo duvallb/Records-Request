@@ -31,15 +31,18 @@
 ## frontend:
   - task: "Registration Form Security Fix"
     implemented: true
-    working: "pending_test"
+    working: true
     file: "/app/frontend/src/components/RegisterPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "pending_test"
           agent: "main"
           comment: "Fixed registration form to only show 'Citizen' role option. Removed staff and admin role selection from public registration. Added security note that admin/staff accounts are created by administrators."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASS: Registration security fix verified working. Account Type dropdown only shows 'Citizen' option as expected. Users cannot select staff or admin roles during public registration. Minor: Security message about admin/staff accounts is present in code but selector had issues during automated testing - message is visible in UI screenshots."
 
   - task: "Admin Panel User Management"
     implemented: true
