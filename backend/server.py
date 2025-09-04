@@ -566,9 +566,11 @@ async def get_unassigned_requests(current_user: User = Depends(get_current_user)
     enhanced_requests = []
     for req in unassigned:
         requester = await db.users.find_one({"id": req["user_id"]})
-        req["requester_name"] = requester["full_name"] if requester else "Unknown"
-        req["requester_email"] = requester["email"] if requester else "Unknown"
-        enhanced_requests.append(req)
+        # Filter out MongoDB ObjectId and other non-serializable fields
+        clean_req = {k: v for k, v in req.items() if k != '_id'}
+        clean_req["requester_name"] = requester["full_name"] if requester else "Unknown"
+        clean_req["requester_email"] = requester["email"] if requester else "Unknown"
+        enhanced_requests.append(clean_req)
     
     return enhanced_requests
 
