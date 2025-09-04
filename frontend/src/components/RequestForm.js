@@ -450,10 +450,10 @@ const RequestForm = () => {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-slate-600">
               <p>
-                <strong>For technical support:</strong> Contact the IT department at records@Shakerpd.com
+                <strong>For technical support:</strong> Contact the IT department at records@shakerpd.com
               </p>
               <p>
-                <strong>For questions about specific records:</strong> Call the Records Division at (216) 1220
+                <strong>For questions about specific records:</strong> Call the Records Division at (216) 491-1220
               </p>
               <p>
                 <strong>Processing time:</strong> Most requests are processed within 5-10 business days
