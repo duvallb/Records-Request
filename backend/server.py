@@ -1105,6 +1105,191 @@ Police Records System
         logger.error(f"Test email failed: {str(e)}")
         return {"message": "Test email failed", "error": str(e)}
 
+# Admin-only endpoints for user management
+@api_router.get("/admin/users")
+async def get_all_users(current_user: User = Depends(get_current_user)):
+    """Get all users for admin management"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    users = await db.users.find({}).to_list(None)
+    return [{"id": user["id"], "email": user["email"], "full_name": user["full_name"], 
+             "role": user["role"], "is_active": user.get("is_active", True), 
+             "created_at": user["created_at"]} for user in users]
+
+@api_router.put("/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, role_data: dict, current_user: User = Depends(get_current_user)):
+    """Update user role - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    new_role = role_data.get("role")
+    if new_role not in ["user", "staff", "admin"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"role": new_role}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": f"User role updated to {new_role}"}
+
+@api_router.put("/admin/users/{user_id}/email")
+async def update_user_email(user_id: str, email_data: dict, current_user: User = Depends(get_current_user)):
+    """Update user email - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    new_email = email_data.get("email")
+    if not new_email or "@" not in new_email:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    
+    # Check if email already exists
+    existing_user = await db.users.find_one({"email": new_email, "id": {"$ne": user_id}})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already in use")
+    
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"email": new_email}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User email updated successfully"}
+
+@api_router.post("/admin/create-staff")
+async def create_staff_member(staff_data: UserCreate, current_user: User = Depends(get_current_user)):
+    """Create new staff or admin user - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": staff_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+    
+    # Create new user
+    hashed_password = pwd_context.hash(staff_data.password)
+    user_dict = {
+        "id": str(uuid.uuid4()),
+        "email": staff_data.email,
+        "full_name": staff_data.full_name,
+        "role": staff_data.role,
+        "hashed_password": hashed_password,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(user_dict)
+    
+    # Create user object for response
+    user_obj = User(**{k: v for k, v in user_dict.items() if k != "hashed_password"})
+    
+    return {"message": f"{staff_data.role.title()} created successfully", "user": user_obj}
+
+@api_router.get("/admin/staff-members")
+async def get_staff_members(current_user: User = Depends(get_current_user)):
+    """Get all staff members with workload info"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all staff and admin users
+    staff_users = await db.users.find({"role": {"$in": ["staff", "admin"]}}).to_list(None)
+    
+    # Get workload for each staff member
+    staff_with_workload = []
+    for staff in staff_users:
+        assigned_count = await db.requests.count_documents({"assigned_staff_id": staff["id"]})
+        completed_count = await db.requests.count_documents({
+            "assigned_staff_id": staff["id"],
+            "status": "completed"
+        })
+        
+        staff_with_workload.append({
+            "id": staff["id"],
+            "email": staff["email"],
+            "full_name": staff["full_name"],
+            "role": staff["role"],
+            "assigned_requests": assigned_count,
+            "completed_requests": completed_count
+        })
+    
+    return staff_with_workload
+
+@api_router.get("/admin/requests-master-list")
+async def get_requests_master_list(current_user: User = Depends(get_current_user)):
+    """Get complete master list of all requests with full details"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all requests with user and staff details
+    requests = await db.requests.find({}).to_list(None)
+    
+    master_list = []
+    for request in requests:
+        # Get requester info
+        requester = await db.users.find_one({"id": request["user_id"]})
+        
+        # Get assigned staff info if assigned
+        assigned_staff = None
+        if request.get("assigned_staff_id"):
+            assigned_staff = await db.users.find_one({"id": request["assigned_staff_id"]})
+        
+        # Get file and message counts
+        file_count = await db.files.count_documents({"request_id": request["id"]})
+        message_count = await db.messages.count_documents({"request_id": request["id"]})
+        
+        master_list.append({
+            "id": request["id"],
+            "title": request["title"],
+            "status": request["status"],
+            "priority": request["priority"],
+            "request_type": request["request_type"],
+            "created_at": request["created_at"],
+            "updated_at": request.get("updated_at", request["created_at"]),
+            "requester_name": requester["full_name"] if requester else "Unknown",
+            "requester_email": requester["email"] if requester else "Unknown",
+            "assigned_staff_name": assigned_staff["full_name"] if assigned_staff else None,
+            "assigned_staff_email": assigned_staff["email"] if assigned_staff else None,
+            "file_count": file_count,
+            "message_count": message_count
+        })
+    
+    return master_list
+
+@api_router.get("/admin/unassigned-requests")
+async def get_unassigned_requests(current_user: User = Depends(get_current_user)):
+    """Get all unassigned requests"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get unassigned requests
+    unassigned = await db.requests.find({"assigned_staff_id": None}).to_list(None)
+    
+    unassigned_list = []
+    for request in unassigned:
+        # Get requester info
+        requester = await db.users.find_one({"id": request["user_id"]})
+        
+        unassigned_list.append({
+            "id": request["id"],
+            "title": request["title"],
+            "description": request["description"],
+            "status": request["status"],
+            "priority": request["priority"],
+            "request_type": request["request_type"],
+            "created_at": request["created_at"],
+            "requester_name": requester["full_name"] if requester else "Unknown",
+            "requester_email": requester["email"] if requester else "Unknown"
+        })
+    
+    return unassigned_list
+
 # Include the router in the main app
 app.include_router(api_router)
 
