@@ -121,15 +121,18 @@ def check_current_state():
             env_content = f.read()
         
         checks = [
-            "SMTP_SERVER=smtp.dreamhost.com" in env_content,
-            "SMTP_USERNAME=request@shakerpd.com" in env_content,
-            "SMTP_PASSWORD=Acac!a38" in env_content,
+            "SMTP_SERVER=\"smtp.dreamhost.com\"" in env_content or "SMTP_SERVER=smtp.dreamhost.com" in env_content,
+            "SMTP_USERNAME=\"request@shakerpd.com\"" in env_content or "SMTP_USERNAME=request@shakerpd.com" in env_content,
+            "SMTP_PASSWORD=\"Acac!a38\"" in env_content or "SMTP_PASSWORD=Acac!a38" in env_content,
         ]
         
         if all(checks):
             print("✅ Email configuration present")
         else:
             print("❌ Email configuration missing or incorrect")
+            print(f"   SMTP_SERVER check: {'✓' if checks[0] else '✗'}")
+            print(f"   SMTP_USERNAME check: {'✓' if checks[1] else '✗'}")
+            print(f"   SMTP_PASSWORD check: {'✓' if checks[2] else '✗'}")
             
     except Exception as e:
         print(f"❌ Email configuration check error: {str(e)}")
