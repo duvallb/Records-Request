@@ -100,6 +100,30 @@ const AdminPanel = () => {
     }
   };
 
+  // New function to update user role
+  const handleUpdateUserRole = async (userId, newRole) => {
+    try {
+      await axios.put(`${API}/admin/users/${userId}/role`, { role: newRole });
+      toast.success(`User role updated to ${newRole}`);
+      fetchAdminData(); // Refresh data
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to update user role';
+      toast.error(errorMessage);
+    }
+  };
+
+  // New function to update user email
+  const handleUpdateUserEmail = async (userId, newEmail) => {
+    try {
+      await axios.put(`${API}/admin/users/${userId}/email`, { email: newEmail });
+      toast.success('User email updated successfully');
+      fetchAdminData(); // Refresh data
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to update user email';
+      toast.error(errorMessage);
+    }
+  };
+
   const exportMasterList = async () => {
     try {
       const response = await axios.get(`${API}/export/requests/csv`, {
