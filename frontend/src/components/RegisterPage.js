@@ -155,10 +155,11 @@ const RegisterPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user">Citizen</SelectItem>
-                    <SelectItem value="staff">Police Staff</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-slate-500">
+                  Staff and administrator accounts are created by system administrators.
+                </p>
               </div>
 
               <div className="space-y-2">
