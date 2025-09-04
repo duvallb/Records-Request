@@ -278,16 +278,19 @@ async def send_new_request_notification(request: RecordRequest, user: User):
     # Send to all admins with valid email addresses
     admin_users = await db.users.find({"role": "admin"}).to_list(None)
     for admin in admin_users:
-        # Skip fake/example email addresses
+        # Skip fake/example/test email addresses
         admin_email = admin.get("email", "")
-        if admin_email and not admin_email.endswith("@example.com") and "@" in admin_email:
+        fake_domains = ["@example.com", "@test.com", "@testdomain.com", "@fake.com", "@dummy.com"]
+        is_fake_email = any(admin_email.endswith(domain) for domain in fake_domains)
+        
+        if admin_email and not is_fake_email and "@" in admin_email and "." in admin_email:
             try:
                 await send_email(admin_email, subject, content)
                 logger.info(f"New request notification sent to admin: {admin_email}")
             except Exception as e:
                 logger.error(f"Failed to send email to admin {admin_email}: {str(e)}")
         else:
-            logger.warning(f"Skipping notification to admin with invalid email: {admin_email}")
+            logger.warning(f"Skipping notification to admin with invalid/fake email: {admin_email}")
 
 async def send_assignment_notification(request: RecordRequest, staff_user: dict):
     """Send notification when request is assigned to staff"""
