@@ -381,7 +381,7 @@ class UpdatedPoliceRecordsAPITester:
             "Create user with invalid email",
             "POST",
             "admin/create-staff",
-            400,  # Should fail
+            422,  # Pydantic validation error
             data=invalid_email_data,
             token=self.tokens['admin']
         )
