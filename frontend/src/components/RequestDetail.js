@@ -527,20 +527,20 @@ const RequestDetail = () => {
 
             <Card className="glass border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg">Need Help?</CardTitle>
+                <CardTitle className="text-lg">Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-slate-600">
                 <p>
-                  <strong>Records Division:</strong><br />
-                  (555) 123-4567
+                  <strong>For technical support:</strong><br />
+                  Contact the IT department at records@Shakerpd.com
                 </p>
                 <p>
-                  <strong>Email Support:</strong><br />
-                  records@police.gov
+                  <strong>For questions about specific records:</strong><br />
+                  Call the Records Division at (216) 1220
                 </p>
                 <p>
-                  <strong>Office Hours:</strong><br />
-                  Mon-Fri, 8:00 AM - 5:00 PM
+                  <strong>Processing time:</strong><br />
+                  Most requests are processed within 5-10 business days
                 </p>
               </CardContent>
             </Card>
