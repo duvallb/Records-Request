@@ -148,10 +148,14 @@ const RequestForm = () => {
                   </SelectContent>
                 </Select>
                 
-                {/* Video Records Legal Notice */}
+                {/* Body Camera Footage Cost Acknowledgment */}
                 {formData.request_type === 'body_cam_footage' && (
-                  <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 mt-2">
-                    <p className="text-xs text-amber-800 leading-relaxed">
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mt-3">
+                    <h4 className="text-sm font-semibold text-amber-800 mb-2">COST ACKNOWLEDGMENT</h4>
+                    <p className="text-sm text-amber-800 mb-3">
+                      I acknowledge that a deposit of $75 is required for body camera footage requests and understand that the total cost will not exceed $750.
+                    </p>
+                    <p className="text-xs text-amber-700 leading-relaxed">
                       <strong>Video Records Notice:</strong> Request inspection or copies of video records (BWC, dash‑cam, fixed) and, if needed, certification docs. Governed by ORC §149.43 and HB 315.
                     </p>
                   </div>
