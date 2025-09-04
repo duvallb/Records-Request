@@ -497,8 +497,9 @@ class UpdatedPoliceRecordsAPITester:
             return
             
         # Create a fake admin user with example.com email
+        timestamp = datetime.now().strftime('%H%M%S')
         fake_admin_data = {
-            "email": "admin.user@example.com",
+            "email": f"fake.admin.{timestamp}@example.com",
             "password": "FakePass123!",
             "full_name": "Fake Admin User",
             "role": "admin"
