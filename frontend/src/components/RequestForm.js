@@ -17,13 +17,26 @@ const RequestForm = () => {
     title: '',
     description: '',
     request_type: '',
+    case_number: '',
     priority: 'medium'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { API } = useContext(AuthContext);
+  const { API, user } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  // Check if user has special privileges (law department, attorney, court, other police departments)
+  const isSpecialRequester = user && (
+    user.role === 'admin' || 
+    user.role === 'staff' ||
+    user.email?.includes('@law.') ||
+    user.email?.includes('@court.') ||
+    user.email?.includes('@attorney.') ||
+    user.email?.includes('@police.') ||
+    user.email?.includes('pd.com') ||
+    user.email?.includes('law.com')
+  );
 
   const requestTypes = [
     { value: 'incident_report', label: 'Incident Report' },
