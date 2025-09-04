@@ -449,7 +449,6 @@ class UpdatedPoliceRecordsAPITester:
             # Test 2: Assign request to staff (should trigger staff notification)
             if 'staff' in self.users:
                 assignment_data = {
-                    "request_id": request_id,
                     "staff_id": self.users['staff']['id']
                 }
                 
