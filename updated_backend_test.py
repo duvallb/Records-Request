@@ -393,8 +393,10 @@ class UpdatedPoliceRecordsAPITester:
             
         # Test 2: Try to create user with duplicate email
         if 'user' in self.users:
+            duplicate_email = self.users['user']['email']
+            print(f"   Testing duplicate email: {duplicate_email}")
             duplicate_email_data = {
-                "email": self.users['user']['email'],
+                "email": duplicate_email,
                 "password": "TestPass123!",
                 "full_name": "Duplicate Email User",
                 "role": "user"
