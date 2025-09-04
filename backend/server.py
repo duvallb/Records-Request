@@ -308,14 +308,17 @@ async def send_assignment_notification(request: RecordRequest, staff_user: dict)
     """
     
     staff_email = staff_user.get("email", "")
-    if staff_email and not staff_email.endswith("@example.com") and "@" in staff_email:
+    fake_domains = ["@example.com", "@test.com", "@testdomain.com", "@fake.com", "@dummy.com"]
+    is_fake_email = any(staff_email.endswith(domain) for domain in fake_domains)
+    
+    if staff_email and not is_fake_email and "@" in staff_email and "." in staff_email:
         try:
             await send_email(staff_email, subject, content)
             logger.info(f"Assignment notification sent to staff: {staff_email}")
         except Exception as e:
             logger.error(f"Failed to send assignment email to {staff_email}: {str(e)}")
     else:
-        logger.warning(f"Skipping assignment notification to staff with invalid email: {staff_email}")
+        logger.warning(f"Skipping assignment notification to staff with invalid/fake email: {staff_email}")
 
 async def send_status_update_notification(request: RecordRequest, user: dict, old_status: str, new_status: str):
     """Send notification when request status changes"""
