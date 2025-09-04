@@ -472,9 +472,8 @@ class UpdatedPoliceRecordsAPITester:
                         success, response = self.run_test(
                             "Update request status (triggers user notification)",
                             "PUT",
-                            f"requests/{request_id}/status",
+                            f"requests/{request_id}/status?new_status=completed",
                             200,
-                            data="completed",
                             token=self.tokens['staff']
                         )
                         
