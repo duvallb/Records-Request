@@ -28,6 +28,7 @@ const AdminPanel = () => {
   const [staff, setStaff] = useState([]);
   const [masterRequests, setMasterRequests] = useState([]);
   const [unassignedRequests, setUnassignedRequests] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // New state for all users
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,15 +50,17 @@ const AdminPanel = () => {
 
   const fetchAdminData = async () => {
     try {
-      const [staffRes, masterRes, unassignedRes] = await Promise.all([
+      const [staffRes, masterRes, unassignedRes, usersRes] = await Promise.all([
         axios.get(`${API}/admin/staff-members`),
         axios.get(`${API}/admin/requests-master-list`),
-        axios.get(`${API}/admin/unassigned-requests`)
+        axios.get(`${API}/admin/unassigned-requests`),
+        axios.get(`${API}/admin/users`) // New endpoint for all users
       ]);
 
       setStaff(staffRes.data);
       setMasterRequests(masterRes.data);
       setUnassignedRequests(unassignedRes.data);
+      setAllUsers(usersRes.data);
     } catch (error) {
       toast.error('Failed to load admin data');
       console.error('Admin data fetch error:', error);
