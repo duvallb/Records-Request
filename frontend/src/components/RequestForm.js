@@ -175,26 +175,51 @@ const RequestForm = () => {
                 )}
               </div>
 
+              {/* Case Number Field */}
               <div className="space-y-2">
-                <Label htmlFor="priority" className="text-sm font-medium text-slate-700">
-                  Priority Level
+                <Label htmlFor="case_number" className="text-sm font-medium text-slate-700">
+                  Case Number (if applicable)
                 </Label>
-                <Select 
-                  value={formData.priority} 
-                  onValueChange={(value) => handleSelectChange('priority', value)}
-                >
-                  <SelectTrigger className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority.value} value={priority.value}>
-                        {priority.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="case_number"
+                  name="case_number"
+                  value={formData.case_number}
+                  onChange={handleCaseNumberChange}
+                  className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Format: 24-123456"
+                  maxLength={9}
+                />
+                <p className="text-xs text-slate-500">
+                  Enter case number in format: ##-###### (e.g., 24-123456)
+                </p>
               </div>
+
+              {/* Priority Level - Only for Special Requesters */}
+              {isSpecialRequester && (
+                <div className="space-y-2">
+                  <Label htmlFor="priority" className="text-sm font-medium text-slate-700">
+                    Priority Level
+                  </Label>
+                  <Select 
+                    value={formData.priority} 
+                    onValueChange={(value) => handleSelectChange('priority', value)}
+                  >
+                    <SelectTrigger className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorities.map((priority) => (
+                        <SelectItem key={priority.value} value={priority.value}>
+                          {priority.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    Available for law department, attorneys, courts, and law enforcement
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-sm font-medium text-slate-700">
