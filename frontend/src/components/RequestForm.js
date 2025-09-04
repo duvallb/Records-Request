@@ -160,6 +160,13 @@ const RequestForm = () => {
                     </p>
                   </div>
                 )}
+                
+                {/* Debug info - remove after testing */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="text-xs text-gray-500 mt-2">
+                    Debug: Request type = "{formData.request_type}", Should show cost: {formData.request_type === 'body_cam_footage' ? 'YES' : 'NO'}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
