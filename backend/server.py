@@ -539,8 +539,10 @@ async def get_master_requests_list(current_user: User = Depends(get_current_user
         # Get message count
         message_count = await db.messages.count_documents({"request_id": req["id"]})
         
+        # Filter out MongoDB ObjectId and other non-serializable fields
+        clean_req = {k: v for k, v in req.items() if k != '_id'}
         enhanced_request = {
-            **req,
+            **clean_req,
             "requester_name": requester["full_name"] if requester else "Unknown",
             "requester_email": requester["email"] if requester else "Unknown",
             "assigned_staff_name": assigned_staff["full_name"] if assigned_staff else None,
