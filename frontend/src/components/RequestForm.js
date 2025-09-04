@@ -67,6 +67,28 @@ const RequestForm = () => {
     });
   };
 
+  const handleCaseNumberChange = (e) => {
+    let value = e.target.value.toUpperCase();
+    
+    // Remove any non-alphanumeric characters except hyphens
+    value = value.replace(/[^A-Z0-9-]/g, '');
+    
+    // Format as ##-######
+    if (value.length > 2 && value.charAt(2) !== '-') {
+      value = value.slice(0, 2) + '-' + value.slice(2);
+    }
+    
+    // Limit to 9 characters (##-######)
+    if (value.length > 9) {
+      value = value.slice(0, 9);
+    }
+    
+    setFormData({
+      ...formData,
+      case_number: value
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
