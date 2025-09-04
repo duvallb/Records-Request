@@ -49,54 +49,53 @@ const AdminPanel = () => {
   }, []);
 
   const fetchAdminData = async () => {
+    setLoading(true);
     try {
-      console.log('🔍 Fetching admin data from API:', API);
-      console.log('🔑 Auth header:', axios.defaults.headers.common['Authorization'] ? 'Present' : 'Missing');
-      
-      // Test individual endpoints
-      console.log('📡 Testing individual endpoints...');
-      
-      try {
-        const staffRes = await axios.get(`${API}/admin/staff-members`);
-        console.log('✅ Staff endpoint:', staffRes.data?.length || 0, 'items');
-        setStaff(staffRes.data || []);
-      } catch (error) {
-        console.error('❌ Staff endpoint error:', error.response?.status, error.response?.data);
+      // Use Promise.all but with individual error handling
+      const results = await Promise.allSettled([
+        axios.get(`${API}/admin/staff-members`),
+        axios.get(`${API}/admin/requests-master-list`),
+        axios.get(`${API}/admin/unassigned-requests`),
+        axios.get(`${API}/admin/users`)
+      ]);
+
+      // Handle staff members
+      if (results[0].status === 'fulfilled') {
+        setStaff(results[0].value.data || []);
+      } else {
+        console.error('Staff members failed:', results[0].reason);
         setStaff([]);
       }
 
-      try {
-        const masterRes = await axios.get(`${API}/admin/requests-master-list`);
-        console.log('✅ Master requests endpoint:', masterRes.data?.length || 0, 'items');
-        console.log('📋 Sample request:', masterRes.data?.[0]?.title || 'No data');
-        setMasterRequests(masterRes.data || []);
-      } catch (error) {
-        console.error('❌ Master requests endpoint error:', error.response?.status, error.response?.data);
+      // Handle master requests
+      if (results[1].status === 'fulfilled') {
+        const masterData = results[1].value.data || [];
+        console.log('Master requests loaded:', masterData.length);
+        setMasterRequests(masterData);
+      } else {
+        console.error('Master requests failed:', results[1].reason);
         setMasterRequests([]);
+        toast.error('Failed to load requests');
       }
 
-      try {
-        const unassignedRes = await axios.get(`${API}/admin/unassigned-requests`);
-        console.log('✅ Unassigned endpoint:', unassignedRes.data?.length || 0, 'items');
-        setUnassignedRequests(unassignedRes.data || []);
-      } catch (error) {
-        console.error('❌ Unassigned endpoint error:', error.response?.status, error.response?.data);
+      // Handle unassigned requests  
+      if (results[2].status === 'fulfilled') {
+        setUnassignedRequests(results[2].value.data || []);
+      } else {
+        console.error('Unassigned requests failed:', results[2].reason);
         setUnassignedRequests([]);
       }
 
-      try {
-        const usersRes = await axios.get(`${API}/admin/users`);
-        console.log('✅ Users endpoint:', usersRes.data?.length || 0, 'items');
-        setAllUsers(usersRes.data || []);
-      } catch (error) {
-        console.error('❌ Users endpoint error:', error.response?.status, error.response?.data);
+      // Handle all users
+      if (results[3].status === 'fulfilled') {
+        setAllUsers(results[3].value.data || []);
+      } else {
+        console.error('All users failed:', results[3].reason);
         setAllUsers([]);
       }
-      
-      console.log('✅ Admin data loading completed');
-      
+
     } catch (error) {
-      console.error('❌ General admin data fetch error:', error);
+      console.error('General admin data fetch error:', error);
       toast.error('Failed to load admin data');
     } finally {
       setLoading(false);
