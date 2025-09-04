@@ -147,6 +147,15 @@ const RequestForm = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {/* Video Records Legal Notice */}
+                {formData.request_type === 'body_cam_footage' && (
+                  <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 mt-2">
+                    <p className="text-xs text-amber-800 leading-relaxed">
+                      <strong>Video Records Notice:</strong> Request inspection or copies of video records (BWC, dash‑cam, fixed) and, if needed, certification docs. Governed by ORC §149.43 and HB 315.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
