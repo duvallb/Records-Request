@@ -63,13 +63,16 @@
     implemented: false
     working: false
     file: "/app/frontend/src/components/AdminPanel.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: true
     status_history:
         - working: false
           agent: "user"
           comment: "User reports request panel showing zero requests after two were submitted. Admin panel not displaying requests correctly."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL ISSUE CONFIRMED: Dashboard Overview shows 27 Total Requests, 17 Pending, 3 Completed, but Master Requests tab displays 0 requests in the table. This confirms the user reported issue. The data is available (shown in dashboard metrics) but not displaying in the Master Requests list/table. Admin panel tabs are accessible but request data is not populating in the Master Requests view."
 ##   - task: "Task name"
 ##     implemented: true
 ##     working: true  # or false or "NA"
