@@ -275,10 +275,19 @@ async def send_new_request_notification(request: RecordRequest, user: User):
     Please log in to the Police Records Portal to review and assign this request.
     """
     
-    # Send to all admins
+    # Send to all admins with valid email addresses
     admin_users = await db.users.find({"role": "admin"}).to_list(None)
     for admin in admin_users:
-        await send_email(admin["email"], subject, content)
+        # Skip fake/example email addresses
+        admin_email = admin.get("email", "")
+        if admin_email and not admin_email.endswith("@example.com") and "@" in admin_email:
+            try:
+                await send_email(admin_email, subject, content)
+                logger.info(f"New request notification sent to admin: {admin_email}")
+            except Exception as e:
+                logger.error(f"Failed to send email to admin {admin_email}: {str(e)}")
+        else:
+            logger.warning(f"Skipping notification to admin with invalid email: {admin_email}")
 
 async def send_assignment_notification(request: RecordRequest, staff_user: dict):
     """Send notification when request is assigned to staff"""
@@ -295,7 +304,15 @@ async def send_assignment_notification(request: RecordRequest, staff_user: dict)
     Please log in to the Police Records Portal to review and process this request.
     """
     
-    await send_email(staff_user["email"], subject, content)
+    staff_email = staff_user.get("email", "")
+    if staff_email and not staff_email.endswith("@example.com") and "@" in staff_email:
+        try:
+            await send_email(staff_email, subject, content)
+            logger.info(f"Assignment notification sent to staff: {staff_email}")
+        except Exception as e:
+            logger.error(f"Failed to send assignment email to {staff_email}: {str(e)}")
+    else:
+        logger.warning(f"Skipping assignment notification to staff with invalid email: {staff_email}")
 
 async def send_status_update_notification(request: RecordRequest, user: dict, old_status: str, new_status: str):
     """Send notification when request status changes"""
