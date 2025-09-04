@@ -422,9 +422,13 @@ async def register(user_data: UserCreate):
             detail="Email already registered"
         )
     
+    # SECURITY: Force all public registrations to be 'user' role only
+    # Staff and admin accounts must be created through admin endpoints
+    user_dict = user_data.dict()
+    user_dict["role"] = "user"  # Force user role for public registration
+    
     # Hash password and create user
     hashed_password = get_password_hash(user_data.password)
-    user_dict = user_data.dict()
     del user_dict["password"]
     
     new_user = User(**user_dict)
