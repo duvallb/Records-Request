@@ -1225,74 +1225,7 @@ async def get_staff_members(current_user: User = Depends(get_current_user)):
     
     return staff_with_workload
 
-@api_router.get("/admin/requests-master-list")
-async def get_requests_master_list(current_user: User = Depends(get_current_user)):
-    """Get complete master list of all requests with full details"""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    # Get all requests with user and staff details
-    requests = await db.requests.find({}).to_list(None)
-    
-    master_list = []
-    for request in requests:
-        # Get requester info
-        requester = await db.users.find_one({"id": request["user_id"]})
-        
-        # Get assigned staff info if assigned
-        assigned_staff = None
-        if request.get("assigned_staff_id"):
-            assigned_staff = await db.users.find_one({"id": request["assigned_staff_id"]})
-        
-        # Get file and message counts
-        file_count = await db.files.count_documents({"request_id": request["id"]})
-        message_count = await db.messages.count_documents({"request_id": request["id"]})
-        
-        master_list.append({
-            "id": request["id"],
-            "title": request["title"],
-            "status": request["status"],
-            "priority": request["priority"],
-            "request_type": request["request_type"],
-            "created_at": request["created_at"],
-            "updated_at": request.get("updated_at", request["created_at"]),
-            "requester_name": requester["full_name"] if requester else "Unknown",
-            "requester_email": requester["email"] if requester else "Unknown",
-            "assigned_staff_name": assigned_staff["full_name"] if assigned_staff else None,
-            "assigned_staff_email": assigned_staff["email"] if assigned_staff else None,
-            "file_count": file_count,
-            "message_count": message_count
-        })
-    
-    return master_list
 
-@api_router.get("/admin/unassigned-requests")
-async def get_unassigned_requests(current_user: User = Depends(get_current_user)):
-    """Get all unassigned requests"""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    # Get unassigned requests
-    unassigned = await db.requests.find({"assigned_staff_id": None}).to_list(None)
-    
-    unassigned_list = []
-    for request in unassigned:
-        # Get requester info
-        requester = await db.users.find_one({"id": request["user_id"]})
-        
-        unassigned_list.append({
-            "id": request["id"],
-            "title": request["title"],
-            "description": request["description"],
-            "status": request["status"],
-            "priority": request["priority"],
-            "request_type": request["request_type"],
-            "created_at": request["created_at"],
-            "requester_name": requester["full_name"] if requester else "Unknown",
-            "requester_email": requester["email"] if requester else "Unknown"
-        })
-    
-    return unassigned_list
 
 # Include the router in the main app
 app.include_router(api_router)
