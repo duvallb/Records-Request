@@ -671,6 +671,7 @@ const AdminPanel = () => {
                       <th className="text-left p-3 font-medium">Priority</th>
                       <th className="text-left p-3 font-medium">Created</th>
                       <th className="text-left p-3 font-medium">Activity</th>
+                      <th className="text-left p-3 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
