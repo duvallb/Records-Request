@@ -157,6 +157,39 @@ const AdminPanel = () => {
     }
   };
 
+  // New function to delete request
+  const handleDeleteRequest = async (requestId, requestTitle) => {
+    if (!window.confirm(`Are you sure you want to permanently delete the request "${requestTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/admin/requests/${requestId}`);
+      toast.success('Request deleted successfully');
+      fetchAdminData(); // Refresh data
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to delete request';
+      toast.error(errorMessage);
+    }
+  };
+
+  // New function to cancel request
+  const handleCancelRequest = async (requestId, requestTitle) => {
+    const reason = window.prompt(`Enter reason for cancelling "${requestTitle}":`);
+    if (!reason) {
+      return;
+    }
+
+    try {
+      await axios.put(`${API}/admin/requests/${requestId}/cancel`, { reason });
+      toast.success('Request cancelled successfully');
+      fetchAdminData(); // Refresh data
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to cancel request';
+      toast.error(errorMessage);
+    }
+  };
+
   const exportMasterList = async () => {
     try {
       const response = await axios.get(`${API}/export/requests/csv`, {
