@@ -163,5 +163,7 @@ test_plan:
 agent_communication:
     - agent: "main"
       message: "Fixed SMTP configuration for Dreamhost.com. Updated .env file with correct SMTP server and password. Backend services restarted successfully. Ready for email functionality testing."
+    - agent: "user"
+      message: "CRITICAL ISSUES FOUND: 1) Email error - system sending to fake admin.user@example.com address 2) Cannot manage user roles from admin panel 3) Request panel shows zero requests 4) Registration allows staff/admin selection 5) Admin needs full system control"
     - agent: "testing"
       message: "✅ COMPREHENSIVE EMAIL TESTING COMPLETED: All email notification workflows verified working. SMTP connection to Dreamhost successful. Created comprehensive test suite (email_notification_test.py) that validates: 1) User registration/login, 2) New request email notifications to admins, 3) Assignment email notifications to staff, 4) Status update email notifications to users. All 25/25 backend API tests passing. Email system fully functional with Dreamhost SMTP configuration."
