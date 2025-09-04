@@ -326,6 +326,103 @@ const AdminPanel = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="users" className="space-y-6">
+          {/* User Management Tab */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                User Management
+              </CardTitle>
+              <CardDescription>Manage all user accounts, roles, and permissions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {allUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        user.role === 'admin' ? 'bg-red-600' : 
+                        user.role === 'staff' ? 'bg-blue-600' : 'bg-green-600'
+                      }`}>
+                        <span className="text-white font-semibold">
+                          {user.full_name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-slate-800">{user.full_name}</h4>
+                        <p className="text-sm text-slate-600 flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          {user.email}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Created: {formatDate(user.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Role</Label>
+                        <Select 
+                          value={user.role} 
+                          onValueChange={(newRole) => handleUpdateUserRole(user.id, newRole)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">Citizen</SelectItem>
+                            <SelectItem value="staff">Staff</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-xs">Email</Label>
+                        <Input
+                          type="email"
+                          defaultValue={user.email}
+                          className="w-64"
+                          onBlur={(e) => {
+                            if (e.target.value !== user.email && e.target.value.includes('@')) {
+                              handleUpdateUserEmail(user.id, e.target.value);
+                            }
+                          }}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && e.target.value !== user.email && e.target.value.includes('@')) {
+                              handleUpdateUserEmail(user.id, e.target.value);
+                            }
+                          }}
+                        />
+                      </div>
+                      
+                      <Badge 
+                        variant="outline" 
+                        className={`capitalize ${
+                          user.role === 'admin' ? 'border-red-200 text-red-700' : 
+                          user.role === 'staff' ? 'border-blue-200 text-blue-700' : 
+                          'border-green-200 text-green-700'
+                        }`}
+                      >
+                        {user.role}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+                
+                {allUsers.length === 0 && (
+                  <div className="text-center py-8 text-slate-500">
+                    <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                    <p>No users found.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="staff" className="space-y-6">
           {/* Create New Staff */}
           <Card>
