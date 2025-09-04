@@ -101,7 +101,32 @@ const RequestForm = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API}/requests`, formData);
+      // Additional validation for body camera footage requests
+      if (formData.request_type === 'body_cam_footage') {
+        if (!costAcknowledged) {
+          const errorMsg = 'Please acknowledge the cost requirements for body camera footage requests.';
+          setError(errorMsg);
+          toast.error(errorMsg);
+          setLoading(false);
+          return;
+        }
+        
+        if (!formData.incident_date || !formData.incident_time || !formData.incident_location || !formData.officer_names) {
+          const errorMsg = 'Please fill in all required fields for body camera footage requests (Date, Time, Location, Officer names).';
+          setError(errorMsg);
+          toast.error(errorMsg);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Prepare submission data
+      const submissionData = {
+        ...formData,
+        cost_acknowledged: costAcknowledged
+      };
+
+      const response = await axios.post(`${API}/requests`, submissionData);
       toast.success('Request submitted successfully!');
       navigate(`/request/${response.data.id}`);
     } catch (error) {
