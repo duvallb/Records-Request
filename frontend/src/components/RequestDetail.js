@@ -532,11 +532,11 @@ const RequestDetail = () => {
               <CardContent className="space-y-3 text-sm text-slate-600">
                 <p>
                   <strong>For technical support:</strong><br />
-                  Contact the IT department at records@Shakerpd.com
+                  Contact the IT department at records@shakerpd.com
                 </p>
                 <p>
                   <strong>For questions about specific records:</strong><br />
-                  Call the Records Division at (216) 1220
+                  Call the Records Division at (216) 491-1220
                 </p>
                 <p>
                   <strong>Processing time:</strong><br />
