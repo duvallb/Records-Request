@@ -391,12 +391,33 @@ class UpdatedPoliceRecordsAPITester:
         else:
             print(f"   ❌ Invalid email was accepted")
             
-        # Test 2: Try to create user with duplicate email
-        if 'user' in self.users:
-            duplicate_email = self.users['user']['email']
-            print(f"   Testing duplicate email: {duplicate_email}")
+        # Test 2: Create a test user first, then try to create duplicate
+        timestamp = datetime.now().strftime('%H%M%S%f')
+        test_email = f"testuser_{timestamp}@test.com"
+        
+        # Create the first user
+        first_user_data = {
+            "email": test_email,
+            "password": "TestPass123!",
+            "full_name": "First Test User",
+            "role": "user"
+        }
+        
+        success, response = self.run_test(
+            "Create first test user",
+            "POST",
+            "admin/create-staff",
+            200,
+            data=first_user_data,
+            token=self.tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ First user created with email: {test_email}")
+            
+            # Now try to create duplicate
             duplicate_email_data = {
-                "email": duplicate_email,
+                "email": test_email,  # Same email
                 "password": "TestPass123!",
                 "full_name": "Duplicate Email User",
                 "role": "user"
@@ -415,6 +436,8 @@ class UpdatedPoliceRecordsAPITester:
                 print(f"   ✅ Duplicate email correctly rejected")
             else:
                 print(f"   ❌ Duplicate email was accepted")
+        else:
+            print(f"   ❌ Could not create first user for duplicate test")
 
     def test_request_workflow_with_notifications(self):
         """Test complete request workflow including email notifications"""
