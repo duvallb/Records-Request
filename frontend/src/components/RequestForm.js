@@ -189,16 +189,110 @@ const RequestForm = () => {
                   </SelectContent>
                 </Select>
                 
-                {/* Body Camera Footage Cost Acknowledgment */}
+                {/* Body Camera Footage Cost Acknowledgment and Details */}
                 {formData.request_type === 'body_cam_footage' && (
-                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mt-3">
-                    <h4 className="text-sm font-semibold text-amber-800 mb-2">COST ACKNOWLEDGMENT</h4>
-                    <p className="text-sm text-amber-800 mb-3">
-                      I acknowledge that a deposit of $75 is required for body camera footage requests and understand that the total cost will not exceed $750.
-                    </p>
-                    <p className="text-xs text-amber-700 leading-relaxed">
-                      <strong>Video Records Notice:</strong> Request inspection or copies of video records (BWC, dash‑cam, fixed) and, if needed, certification docs. Governed by ORC §149.43 and HB 315.
-                    </p>
+                  <div className="space-y-4">
+                    {/* Detailed Body Camera Request Form */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="text-sm font-semibold text-blue-800 mb-3">Body Camera Footage Request Details</h4>
+                      <p className="text-sm text-blue-700 mb-4">
+                        I am requesting body camera footage from the following incident:
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="incident_date" className="text-sm font-medium text-blue-800">
+                            Date *
+                          </Label>
+                          <Input
+                            id="incident_date"
+                            name="incident_date"
+                            type="date"
+                            value={formData.incident_date}
+                            onChange={handleInputChange}
+                            className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="incident_time" className="text-sm font-medium text-blue-800">
+                            Time *
+                          </Label>
+                          <Input
+                            id="incident_time"
+                            name="incident_time"
+                            type="time"
+                            value={formData.incident_time}
+                            onChange={handleInputChange}
+                            className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 mt-4">
+                        <Label htmlFor="incident_location" className="text-sm font-medium text-blue-800">
+                          Location *
+                        </Label>
+                        <Input
+                          id="incident_location"
+                          name="incident_location"
+                          value={formData.incident_location}
+                          onChange={handleInputChange}
+                          className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="Street address, intersection, or specific location"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2 mt-4">
+                        <Label htmlFor="officer_names" className="text-sm font-medium text-blue-800">
+                          Officer(s) *
+                        </Label>
+                        <Input
+                          id="officer_names"
+                          name="officer_names"
+                          value={formData.officer_names}
+                          onChange={handleInputChange}
+                          className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="Officer names or badge numbers"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="bg-blue-100 p-3 rounded-lg mt-4">
+                        <p className="text-xs text-blue-700 leading-relaxed">
+                          <strong>Please note:</strong> I understand that footage may be subject to redaction for privacy and ongoing investigation concerns.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Cost Acknowledgment with Checkbox */}
+                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                      <h4 className="text-sm font-semibold text-amber-800 mb-2">COST ACKNOWLEDGMENT</h4>
+                      <p className="text-sm text-amber-800 mb-3">
+                        I acknowledge that a deposit of $75 is required for body camera footage requests and understand that the total cost will not exceed $750.
+                      </p>
+                      <p className="text-xs text-amber-700 leading-relaxed mb-4">
+                        <strong>Video Records Notice:</strong> Request inspection or copies of video records (BWC, dash‑cam, fixed) and, if needed, certification docs. Governed by ORC §149.43 and HB 315.
+                      </p>
+                      
+                      {/* Checkbox for acknowledgment */}
+                      <div className="flex items-start space-x-3">
+                        <input
+                          type="checkbox"
+                          id="cost_acknowledged"
+                          checked={costAcknowledged}
+                          onChange={(e) => setCostAcknowledged(e.target.checked)}
+                          className="mt-1 h-4 w-4 text-amber-600 focus:ring-amber-500 border-amber-300 rounded"
+                          required
+                        />
+                        <Label htmlFor="cost_acknowledged" className="text-sm text-amber-800 font-medium cursor-pointer">
+                          I acknowledge and agree to the cost requirements and legal notices above. *
+                        </Label>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
