@@ -258,6 +258,24 @@ const RequestForm = () => {
                 />
               </div>
 
+              {/* Payment Information */}
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h4 className="text-sm font-medium text-green-800 mb-2">Payment Information</h4>
+                <div className="text-sm text-green-700 space-y-2">
+                  <p className="font-medium mb-2">Accepted Payment Methods:</p>
+                  <ul className="space-y-1 ml-4">
+                    <li>• <strong>Cash:</strong> Pay in person at the Records Division</li>
+                    <li>• <strong>Check:</strong> Pay in person or mail to Records Division</li>
+                  </ul>
+                  <p className="text-xs text-green-600 mt-2">
+                    <strong>Note:</strong> Credit/debit card payments are not currently accepted.
+                  </p>
+                  <p className="text-xs text-green-600">
+                    Fees vary based on request type and processing requirements. You will be notified of exact costs before processing.
+                  </p>
+                </div>
+              </div>
+
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h4 className="text-sm font-medium text-blue-800 mb-2">Important Information</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
