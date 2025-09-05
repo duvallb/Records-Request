@@ -43,7 +43,7 @@ db = client[os.environ['DB_NAME']]
 # JWT and Password settings
 SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "your-super-secret-jwt-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours for better user experience
 
 # Email settings
 SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
