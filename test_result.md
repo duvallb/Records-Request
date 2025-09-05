@@ -211,3 +211,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Starting systematic fix of critical issues. Will first configure SMTP password, then fix request visibility and detail display issues, followed by staff communication updates and email template design mode implementation."
+  - agent: "main"
+    message: "Fixed SMTP password configuration in .env file. Updated EnhancedRequestForm to send structured fields instead of combining them into description. Added enhanced detail display section to RequestDetail component. Ready for backend testing."
