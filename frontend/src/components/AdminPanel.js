@@ -811,13 +811,13 @@ const AdminPanel = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Email Configuration Notice */}
-      <Alert>
-        <Mail className="h-4 w-4" />
+      {/* Email System Status */}
+      <Alert className="bg-green-50 border-green-200">
+        <Mail className="h-4 w-4 text-green-600" />
         <AlertDescription>
-          <strong>Email Configuration:</strong> Email notifications are configured in the backend .env file. 
-          Currently showing logged notifications (check server logs). To enable actual email sending, 
-          configure SMTP_USERNAME, SMTP_PASSWORD, and other email settings in /app/backend/.env
+          <strong className="text-green-800">Email System Active:</strong> 
+          <span className="text-green-700"> Notifications are being sent via Dreamhost SMTP (request@shakerpd.com). 
+          Email templates are operational for new requests, assignments, and status updates.</span>
         </AlertDescription>
       </Alert>
     </div>
