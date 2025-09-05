@@ -381,13 +381,27 @@ const RequestDetail = () => {
 
                 {request.assigned_staff_id && (
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <div className="flex items-center gap-2 text-blue-800">
-                      <User className="w-4 h-4" />
-                      <span className="font-medium">Assigned to Staff</span>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 text-blue-800 mb-2">
+                          <User className="w-4 h-4" />
+                          <span className="font-medium">Assigned to Staff</span>
+                        </div>
+                        <p className="text-sm text-blue-700">
+                          {request.assigned_staff_name ? (
+                            <>Assigned to: <span className="font-medium">{request.assigned_staff_name}</span></>
+                          ) : (
+                            'This request has been assigned to a staff member for processing.'
+                          )}
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Staff member can view and respond to messages below
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-blue-700 border-blue-300">
+                        Staff Assigned
+                      </Badge>
                     </div>
-                    <p className="text-sm text-blue-700 mt-1">
-                      This request has been assigned to a staff member for processing.
-                    </p>
                   </div>
                 )}
               </CardContent>
