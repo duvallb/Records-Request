@@ -1303,6 +1303,192 @@ async def get_staff_members(current_user: User = Depends(get_current_user)):
 
 
 
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a user - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if user exists
+    user_to_delete = await db.users.find_one({"id": user_id})
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent deleting yourself
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    # Delete user's requests and associated data
+    user_requests = await db.requests.find({"user_id": user_id}).to_list(None)
+    for request in user_requests:
+        # Delete files associated with the requests
+        await db.files.delete_many({"request_id": request["id"]})
+        # Delete messages associated with the requests
+        await db.messages.delete_many({"request_id": request["id"]})
+    
+    # Delete all requests by this user
+    await db.requests.delete_many({"user_id": user_id})
+    
+    # Unassign any requests assigned to this user (if they're staff)
+    await db.requests.update_many(
+        {"assigned_staff_id": user_id},
+        {"$set": {"assigned_staff_id": None}}
+    )
+    
+    # Delete the user
+    result = await db.users.delete_one({"id": user_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": f"User {user_to_delete['full_name']} deleted successfully"}
+
+@api_router.get("/admin/email-templates")
+async def get_email_templates(current_user: User = Depends(get_current_user)):
+    """Get current email templates - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    templates = {
+        "new_request": {
+            "subject": "New Records Request: {title}",
+            "content": """A new records request has been submitted.
+
+Request Details:
+- Title: {title}
+- Type: {request_type}
+- Priority: {priority}
+- Submitted by: {user_name}
+- Submitted at: {created_at}
+
+Please log in to the Police Records Portal to review and assign this request."""
+        },
+        "assignment": {
+            "subject": "Request Assigned: {title}",
+            "content": """You have been assigned a new records request.
+
+Request Details:
+- Title: {title}
+- Type: {request_type}
+- Priority: {priority}
+- Request ID: {request_id}
+
+Please log in to the Police Records Portal to review and process this request."""
+        },
+        "status_update": {
+            "subject": "Request Status Update: {title}",
+            "content": """Your records request status has been updated.
+
+Request Details:
+- Title: {title}
+- Status: {new_status}
+- Updated: {updated_at}
+
+Log in to the Police Records Portal to view full details."""
+        },
+        "cancellation": {
+            "subject": "Request Cancelled: {title}",
+            "content": """Your records request has been cancelled.
+
+Request Details:
+- Title: {title}
+- Request ID: {request_id}
+- Cancellation Reason: {reason}
+- Cancelled Date: {cancelled_at}
+
+If you have questions about this cancellation, please contact the Records Division at (216) 491-1220."""
+        }
+    }
+    
+    return templates
+
+@api_router.put("/admin/email-templates/{template_type}")
+async def update_email_template(
+    template_type: str, 
+    template_data: dict, 
+    current_user: User = Depends(get_current_user)
+):
+    """Update email template - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    valid_types = ["new_request", "assignment", "status_update", "cancellation"]
+    if template_type not in valid_types:
+        raise HTTPException(status_code=400, detail="Invalid template type")
+    
+    subject = template_data.get("subject", "")
+    content = template_data.get("content", "")
+    
+    if not subject or not content:
+        raise HTTPException(status_code=400, detail="Subject and content are required")
+    
+    # Store template in database
+    template_doc = {
+        "type": template_type,
+        "subject": subject,
+        "content": content,
+        "updated_by": current_user.id,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Upsert the template
+    await db.email_templates.replace_one(
+        {"type": template_type},
+        template_doc,
+        upsert=True
+    )
+    
+    return {"message": f"Email template '{template_type}' updated successfully"}
+
+@api_router.post("/admin/test-email-template")
+async def test_email_template(
+    test_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Send test email with template - admin only"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    template_type = test_data.get("template_type")
+    test_email = test_data.get("test_email", current_user.email)
+    
+    if not template_type:
+        raise HTTPException(status_code=400, detail="Template type is required")
+    
+    # Get template
+    template = await db.email_templates.find_one({"type": template_type})
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Sample data for testing
+    sample_data = {
+        "title": "Sample Police Report Request",
+        "request_type": "Police Report",
+        "priority": "Medium",
+        "user_name": "John Doe",
+        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M'),
+        "request_id": "12345",
+        "new_status": "In Progress",
+        "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M'),
+        "reason": "Test cancellation reason",
+        "cancelled_at": datetime.now().strftime('%Y-%m-%d %H:%M')
+    }
+    
+    # Format template
+    try:
+        subject = template["subject"].format(**sample_data)
+        content = template["content"].format(**sample_data)
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"Template contains invalid placeholder: {str(e)}")
+    
+    # Send test email
+    success = await send_email(test_email, f"[TEST] {subject}", content)
+    
+    if success:
+        return {"message": f"Test email sent successfully to {test_email}"}
+    else:
+        return {"message": "Failed to send test email", "error": "Check server logs"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
