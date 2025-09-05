@@ -29,16 +29,37 @@ const WelcomePage = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <Link to="/login">
-                <Button variant="ghost" className="text-slate-600 hover:text-blue-600">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                  Get Started
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-slate-600">Welcome, {user.full_name}</span>
+                  <Link to="/dashboard">
+                    <Button variant="ghost" className="text-slate-600 hover:text-blue-600">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    className="text-slate-600 hover:text-red-600"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost" className="text-slate-600 hover:text-blue-600">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
