@@ -166,6 +166,29 @@ Email: #{police_email}`
     }
   };
 
+  const handleSaveEmailTemplate = async () => {
+    setSavingTemplate(true);
+    try {
+      // For now, we'll save to localStorage since we don't have a backend endpoint yet
+      localStorage.setItem('email_templates', JSON.stringify(emailTemplates));
+      toast.success('Email template saved successfully!');
+    } catch (error) {
+      toast.error('Failed to save email template');
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  const handleTemplateChange = (templateType, field, value) => {
+    setEmailTemplates(prev => ({
+      ...prev,
+      [templateType]: {
+        ...prev[templateType],
+        [field]: value
+      }
+    }));
+  };
+
   const exportMasterList = async () => {
     try {
       const response = await axios.get(`${API}/export/requests/csv`, {
