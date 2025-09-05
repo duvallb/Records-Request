@@ -192,7 +192,7 @@ backend:
 frontend:
   - task: "Enhanced request form with detailed fields"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/frontend/src/components/EnhancedRequestForm.js"
     stuck_count: 1
     priority: "high"
@@ -201,10 +201,13 @@ frontend:
       - working: false
         agent: "user"
         comment: "Request details not properly captured or displayed after submission"
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed EnhancedRequestForm to send structured fields instead of combining them into description. Ready for frontend testing."
 
   - task: "Dashboard request display"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/frontend/src/components/Dashboard.js"
     stuck_count: 1
     priority: "high"
@@ -213,6 +216,24 @@ frontend:
       - working: false
         agent: "user"
         comment: "Newly submitted requests not appearing on user dashboard"
+      - working: "NA"
+        agent: "main"
+        comment: "Backend working correctly for request retrieval. Frontend needs testing to verify dashboard display."
+
+  - task: "Request detail display with enhanced fields"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/RequestDetail.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Request details (address, names, time, officers) not displaying in review section"
+      - working: "NA"
+        agent: "main"
+        comment: "Added structured display section for enhanced details (incident_date, incident_location, case_number, officer_names, vehicle_info, additional_details). Ready for testing."
 
   - task: "Staff communication system"
     implemented: true
