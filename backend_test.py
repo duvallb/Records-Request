@@ -515,6 +515,7 @@ class PoliceRecordsAPITester:
             self.test_create_requests()
             self.test_get_requests()
             self.test_get_specific_request()
+            self.test_email_notification_system()
             self.test_messaging_system()
             self.test_notifications()
             self.test_admin_functions()
