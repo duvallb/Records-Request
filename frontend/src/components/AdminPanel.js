@@ -21,7 +21,8 @@ import {
   Download,
   UserCheck,
   Mail,
-  Search
+  Search,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
