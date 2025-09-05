@@ -1,10 +1,18 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Shield, FileText, Users, Clock, CheckCircle, ArrowRight } from 'lucide-react';
+import { Shield, FileText, Users, Clock, CheckCircle, ArrowRight, LogOut } from 'lucide-react';
+import { AuthContext } from '../App';
 
 const WelcomePage = () => {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
   return (
     <div className="min-h-screen">
       {/* Header */}
