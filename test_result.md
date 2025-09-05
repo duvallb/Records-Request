@@ -142,7 +142,7 @@ backend:
     implemented: true
     working: true
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
@@ -151,7 +151,7 @@ backend:
         comment: "Request details (address, names, time, officers) not displaying in review section"
       - working: true
         agent: "testing"
-        comment: "GET /api/requests and GET /api/requests/{id} endpoints working correctly. Enhanced fields are returned properly. User-specific filtering verified: users see only their own requests, staff see assigned and unassigned requests, admins see all requests. All enhanced fields present in API responses."
+        comment: "Role-based request retrieval working correctly with enhanced fields properly stored and retrieved"
 
   - task: "Authentication system"
     implemented: true
