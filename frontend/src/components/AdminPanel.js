@@ -490,6 +490,15 @@ const AdminPanel = () => {
                       >
                         {user.role}
                       </Badge>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteUser(user.id, user.full_name)}
+                        className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 ))}
