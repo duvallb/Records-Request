@@ -157,50 +157,105 @@ class PoliceRecordsAPITester:
                     print(f"   ✅ {role} dashboard stats: {response}")
 
     def test_create_requests(self):
-        """Test creating records requests"""
+        """Test creating records requests with enhanced fields"""
         print("\n" + "="*50)
-        print("TESTING REQUEST CREATION")
+        print("TESTING REQUEST CREATION WITH ENHANCED FIELDS")
         print("="*50)
         
         if 'user' not in self.tokens:
             print("❌ No user token available for request creation")
             return
             
-        # Test different types of requests
-        request_types = [
-            {
-                "title": "Police Report Request",
-                "description": "Need police report for insurance claim",
-                "request_type": "police_report",
-                "priority": "high"
-            },
-            {
-                "title": "Incident Report Request", 
-                "description": "Request for incident report from last week",
-                "request_type": "incident_report",
-                "priority": "medium"
-            },
-            {
-                "title": "Body Cam Footage Request",
-                "description": "Need body cam footage for legal case",
-                "request_type": "body_cam_footage", 
-                "priority": "high"
-            }
-        ]
+        # Test request with all enhanced fields
+        enhanced_request = {
+            "title": "Traffic Incident Police Report",
+            "description": "Need police report for traffic incident involving multiple vehicles",
+            "request_type": "police_report",
+            "priority": "high",
+            # Enhanced fields being tested
+            "incident_date": "2024-01-15",
+            "incident_time": "14:30",
+            "incident_location": "123 Main Street, Shaker Heights, OH",
+            "case_number": "PD-2024-001234",
+            "officer_names": "Officer Smith, Officer Johnson",
+            "vehicle_info": "Blue Honda Civic (License: ABC123), Red Ford F150 (License: XYZ789)",
+            "additional_details": "Two-vehicle collision at intersection. No injuries reported. Both vehicles towed.",
+            "contact_phone": "(216) 555-0123"
+        }
         
-        for request_data in request_types:
-            success, response = self.run_test(
-                f"Create {request_data['request_type']} request",
-                "POST",
-                "requests",
-                200,
-                data=request_data,
-                token=self.tokens['user']
-            )
+        success, response = self.run_test(
+            "Create request with enhanced fields",
+            "POST",
+            "requests",
+            200,
+            data=enhanced_request,
+            token=self.tokens['user']
+        )
+        
+        if success and 'id' in response:
+            self.requests_created.append(response['id'])
+            print(f"   ✅ Enhanced request created with ID: {response['id']}")
             
-            if success and 'id' in response:
-                self.requests_created.append(response['id'])
-                print(f"   ✅ Request created with ID: {response['id']}")
+            # Verify enhanced fields are stored
+            self.verify_enhanced_fields(response['id'], enhanced_request)
+        else:
+            print("   ❌ Failed to create enhanced request")
+            
+        # Test basic request without enhanced fields
+        basic_request = {
+            "title": "Basic Incident Report",
+            "description": "Simple incident report request",
+            "request_type": "incident_report",
+            "priority": "medium"
+        }
+        
+        success, response = self.run_test(
+            "Create basic request",
+            "POST",
+            "requests",
+            200,
+            data=basic_request,
+            token=self.tokens['user']
+        )
+        
+        if success and 'id' in response:
+            self.requests_created.append(response['id'])
+            print(f"   ✅ Basic request created with ID: {response['id']}")
+
+    def verify_enhanced_fields(self, request_id, original_data):
+        """Verify that enhanced fields are properly stored and retrieved"""
+        print(f"\n🔍 Verifying enhanced fields for request {request_id}...")
+        
+        success, response = self.run_test(
+            "Get request with enhanced fields",
+            "GET",
+            f"requests/{request_id}",
+            200,
+            token=self.tokens['user']
+        )
+        
+        if success:
+            enhanced_fields = [
+                'incident_date', 'incident_time', 'incident_location', 
+                'case_number', 'officer_names', 'vehicle_info', 
+                'additional_details', 'contact_phone'
+            ]
+            
+            all_fields_present = True
+            for field in enhanced_fields:
+                if field in original_data:
+                    if response.get(field) == original_data[field]:
+                        print(f"   ✅ {field}: {response.get(field)}")
+                    else:
+                        print(f"   ❌ {field}: Expected '{original_data[field]}', got '{response.get(field)}'")
+                        all_fields_present = False
+                        
+            if all_fields_present:
+                print("   ✅ All enhanced fields verified successfully")
+            else:
+                print("   ❌ Some enhanced fields missing or incorrect")
+        else:
+            print("   ❌ Failed to retrieve request for verification")
 
     def test_get_requests(self):
         """Test retrieving requests with role-based access"""
