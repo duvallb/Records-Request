@@ -192,7 +192,7 @@ const WelcomePage = () => {
               <div className="space-y-2 text-slate-400">
                 <p>Shaker Heights Police Department</p>
                 <p>Email: request@shakerpd.com</p>
-                <p>Phone: (216) 491-1234</p>
+                <p>Phone: (216) 491-1220</p>
               </div>
             </div>
             <div>
