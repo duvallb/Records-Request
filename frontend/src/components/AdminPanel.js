@@ -878,6 +878,92 @@ const AdminPanel = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="emails" className="space-y-6">
+          {/* Email Templates Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5" />
+                Email Template Management
+              </CardTitle>
+              <CardDescription>Customize email notifications sent to users and staff</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Template Selector */}
+                <div className="flex flex-wrap gap-2">
+                  {Object.keys(emailTemplates).map((templateType) => (
+                    <Button
+                      key={templateType}
+                      variant={selectedTemplate === templateType ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedTemplate(templateType)}
+                    >
+                      {templateType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Template Editor */}
+                {selectedTemplate && emailTemplates[selectedTemplate] && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium">
+                        {selectedTemplate.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Template
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const email = prompt('Enter test email address:');
+                            if (email) handleTestEmailTemplate(selectedTemplate, email);
+                          }}
+                        >
+                          Send Test
+                        </Button>
+                        <Button
+                          variant={editingTemplate ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setEditingTemplate(!editingTemplate)}
+                        >
+                          {editingTemplate ? 'Cancel' : 'Edit'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {editingTemplate ? (
+                      <EmailTemplateEditor
+                        template={emailTemplates[selectedTemplate]}
+                        onSave={(subject, content) => handleUpdateEmailTemplate(selectedTemplate, subject, content)}
+                        onCancel={() => setEditingTemplate(false)}
+                      />
+                    ) : (
+                      <EmailTemplateViewer template={emailTemplates[selectedTemplate]} />
+                    )}
+                  </div>
+                )}
+
+                {/* Available Variables Help */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Available Template Variables:</h4>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    <p><code>{'{title}'}</code> - Request title</p>
+                    <p><code>{'{request_type}'}</code> - Type of request</p>
+                    <p><code>{'{priority}'}</code> - Request priority</p>
+                    <p><code>{'{user_name}'}</code> - User's full name</p>
+                    <p><code>{'{created_at}'}</code> - Creation date/time</p>
+                    <p><code>{'{request_id}'}</code> - Unique request ID</p>
+                    <p><code>{'{new_status}'}</code> - Updated status</p>
+                    <p><code>{'{updated_at}'}</code> - Update date/time</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
 
       {/* Email System Status */}
@@ -889,6 +975,67 @@ const AdminPanel = () => {
           Email templates are operational for new requests, assignments, and status updates.</span>
         </AlertDescription>
       </Alert>
+    </div>
+  );
+};
+
+// Email Template Viewer Component
+const EmailTemplateViewer = ({ template }) => (
+  <div className="space-y-4">
+    <div>
+      <Label className="text-sm font-medium">Subject:</Label>
+      <div className="mt-1 p-3 bg-slate-50 rounded border text-sm">
+        {template.subject}
+      </div>
+    </div>
+    <div>
+      <Label className="text-sm font-medium">Content:</Label>
+      <div className="mt-1 p-3 bg-slate-50 rounded border text-sm whitespace-pre-wrap">
+        {template.content}
+      </div>
+    </div>
+  </div>
+);
+
+// Email Template Editor Component
+const EmailTemplateEditor = ({ template, onSave, onCancel }) => {
+  const [subject, setSubject] = useState(template.subject);
+  const [content, setContent] = useState(template.content);
+
+  const handleSave = () => {
+    if (!subject.trim() || !content.trim()) {
+      toast.error('Subject and content are required');
+      return;
+    }
+    onSave(subject, content);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="subject" className="text-sm font-medium">Subject:</Label>
+        <Input
+          id="subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          className="mt-1"
+          placeholder="Email subject with {variables}"
+        />
+      </div>
+      <div>
+        <Label htmlFor="content" className="text-sm font-medium">Content:</Label>
+        <textarea
+          id="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="mt-1 w-full h-64 p-3 border border-slate-200 rounded-md focus:border-blue-500 focus:ring-blue-500"
+          placeholder="Email content with {variables}"
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button onClick={handleSave}>Save Template</Button>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+      </div>
     </div>
   );
 };
