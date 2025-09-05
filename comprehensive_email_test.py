@@ -7,7 +7,7 @@ import json
 import time
 
 def test_complete_email_workflow():
-    base_url = "https://foia-request.preview.emergentagent.com/api"
+    base_url = "https://request-hub-6.preview.emergentagent.com/api"
     
     print("🔍 COMPREHENSIVE EMAIL SYSTEM TEST")
     print("=" * 60)

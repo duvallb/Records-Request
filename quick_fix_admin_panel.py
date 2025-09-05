@@ -6,7 +6,7 @@ import requests
 import json
 
 def fix_admin_panel():
-    base_url = "https://foia-request.preview.emergentagent.com/api"
+    base_url = "https://request-hub-6.preview.emergentagent.com/api"
     
     # First create a reliable admin user
     admin_data = {

@@ -6,7 +6,7 @@ import requests
 import json
 
 def check_current_state():
-    base_url = "https://foia-request.preview.emergentagent.com/api"
+    base_url = "https://request-hub-6.preview.emergentagent.com/api"
     
     print("🔍 CHECKING CURRENT APPLICATION STATE AFTER ROLLBACK")
     print("=" * 60)

@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 
 class FocusedPoliceRecordsAPITester:
-    def __init__(self, base_url="https://foia-request.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://request-hub-6.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tokens = {}
         self.users = {}

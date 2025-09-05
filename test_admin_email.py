@@ -7,7 +7,7 @@ import json
 import sys
 
 def test_admin_email():
-    base_url = "https://foia-request.preview.emergentagent.com/api"
+    base_url = "https://request-hub-6.preview.emergentagent.com/api"
     
     # First, create an admin user and login
     print("🔐 Creating admin user for email test...")

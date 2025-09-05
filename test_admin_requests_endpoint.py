@@ -6,7 +6,7 @@ import requests
 import json
 
 def test_admin_requests_endpoint():
-    base_url = "https://foia-request.preview.emergentagent.com/api"
+    base_url = "https://request-hub-6.preview.emergentagent.com/api"
     
     # Login as admin
     admin_login = {

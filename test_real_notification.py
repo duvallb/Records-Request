@@ -7,7 +7,7 @@ import json
 import time
 
 def test_real_email_notification():
-    base_url = "https://foia-request.preview.emergentagent.com/api"
+    base_url = "https://request-hub-6.preview.emergentagent.com/api"
     
     print("🔍 Testing REAL email notification workflow...")
     print("=" * 60)

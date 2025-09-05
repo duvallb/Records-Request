@@ -5,7 +5,7 @@ Test dashboard stats endpoint and fix data display issues
 import requests
 
 def test_dashboard_stats():
-    base_url = "https://foia-request.preview.emergentagent.com/api"
+    base_url = "https://request-hub-6.preview.emergentagent.com/api"
     
     # Login as admin
     admin_login = {
