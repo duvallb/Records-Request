@@ -8,6 +8,8 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Alert, AlertDescription } from './ui/alert';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { 
   Users, 
   UserPlus, 
