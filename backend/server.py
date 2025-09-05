@@ -50,7 +50,12 @@ SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
-FROM_EMAIL = os.environ.get("FROM_EMAIL", "noreply@police.gov")
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "request@shakerpd.com")
+
+# Contact Information
+POLICE_PHONE = "(216) 491-1220"
+POLICE_EMAIL = "request@shakerpd.com"
+POLICE_ADDRESS = "Shaker Heights Police Department"
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -97,6 +102,12 @@ class UserCreate(BaseModel):
     full_name: str
     role: UserRole = UserRole.USER
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+    role: Optional[UserRole] = None
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -127,6 +138,15 @@ class RecordRequest(BaseModel):
     assigned_staff_name: Optional[str] = None
     requester_name: Optional[str] = None
     requester_email: Optional[str] = None
+    # Enhanced fields for detailed information
+    incident_date: Optional[str] = None
+    incident_time: Optional[str] = None
+    incident_location: Optional[str] = None
+    case_number: Optional[str] = None
+    officer_names: Optional[str] = None
+    vehicle_info: Optional[str] = None
+    additional_details: Optional[str] = None
+    contact_phone: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     priority: str = "medium"
@@ -137,6 +157,30 @@ class RecordRequestCreate(BaseModel):
     description: str
     request_type: RequestType
     priority: str = "medium"
+    # Enhanced fields
+    incident_date: Optional[str] = None
+    incident_time: Optional[str] = None
+    incident_location: Optional[str] = None
+    case_number: Optional[str] = None
+    officer_names: Optional[str] = None
+    vehicle_info: Optional[str] = None
+    additional_details: Optional[str] = None
+    contact_phone: Optional[str] = None
+
+class RecordRequestUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    request_type: Optional[RequestType] = None
+    priority: Optional[str] = None
+    status: Optional[RequestStatus] = None
+    incident_date: Optional[str] = None
+    incident_time: Optional[str] = None
+    incident_location: Optional[str] = None
+    case_number: Optional[str] = None
+    officer_names: Optional[str] = None
+    vehicle_info: Optional[str] = None
+    additional_details: Optional[str] = None
+    contact_phone: Optional[str] = None
 
 class Message(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -159,6 +203,23 @@ class Notification(BaseModel):
     is_read: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class EmailTemplate(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    template_type: str  # new_request, assignment, status_update
+    subject: str
+    content: str
+    html_content: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class EmailTemplateCreate(BaseModel):
+    name: str
+    template_type: str
+    subject: str
+    content: str
+    html_content: Optional[str] = None
+
 class AnalyticsData(BaseModel):
     total_requests: int
     requests_by_status: dict
@@ -178,6 +239,7 @@ class StaffUser(BaseModel):
     email: str
     assigned_requests: int
     completed_requests: int
+    is_active: bool
 
 # Helper functions
 def verify_password(plain_password, hashed_password):
@@ -226,14 +288,24 @@ def prepare_for_mongo(data):
                 data[key] = [prepare_for_mongo(item) if isinstance(item, dict) else item for item in value]
     return data
 
-# Email functions
+# Email functions with template support
+async def get_email_template(template_type: str):
+    """Get active email template by type"""
+    template = await db.email_templates.find_one({"template_type": template_type, "is_active": True})
+    if template:
+        return EmailTemplate(**template)
+    return None
+
 async def send_email(to_email: str, subject: str, content: str, html_content: str = None):
     """Send email notification"""
     try:
         if not SMTP_USERNAME or not SMTP_PASSWORD:
-            print(f"📧 Email would be sent to {to_email}")
+            print(f"📧 EMAIL NOTIFICATION:")
+            print(f"📧 To: {to_email}")
+            print(f"📧 From: {FROM_EMAIL}")
             print(f"📧 Subject: {subject}")
-            print(f"📧 Content: {content}")
+            print(f"📧 Content:\n{content}")
+            print("📧 Contact: " + POLICE_PHONE)
             print("=" * 50)
             return True  # Skip actual sending in development
             
@@ -259,62 +331,165 @@ async def send_email(to_email: str, subject: str, content: str, html_content: st
         print(f"Failed to send email: {str(e)}")
         return False
 
+async def send_templated_email(to_email: str, template_type: str, variables: dict):
+    """Send email using stored templates with variable substitution"""
+    template = await get_email_template(template_type)
+    
+    if template:
+        # Use Jinja2 for template substitution
+        subject_template = Template(template.subject)
+        content_template = Template(template.content)
+        
+        subject = subject_template.render(**variables)
+        content = content_template.render(**variables)
+        
+        html_content = None
+        if template.html_content:
+            html_template = Template(template.html_content)
+            html_content = html_template.render(**variables)
+        
+        await send_email(to_email, subject, content, html_content)
+    else:
+        # Fallback to default templates
+        await send_default_email(to_email, template_type, variables)
+
+async def send_default_email(to_email: str, template_type: str, variables: dict):
+    """Fallback email templates"""
+    if template_type == "new_request":
+        subject = f"New Records Request: {variables.get('title', 'Unknown')}"
+        content = f"""
+SHAKER HEIGHTS POLICE DEPARTMENT
+Records Request Notification
+
+A new records request has been submitted.
+
+Request Details:
+- Title: {variables.get('title')}
+- Type: {variables.get('request_type', '').replace('_', ' ').title()}
+- Priority: {variables.get('priority', '').title()}
+- Submitted by: {variables.get('requester_name')}
+- Contact: {variables.get('contact_phone', 'Not provided')}
+- Submitted at: {variables.get('created_at')}
+
+Additional Information:
+- Incident Date: {variables.get('incident_date', 'Not provided')}
+- Incident Location: {variables.get('incident_location', 'Not provided')}
+- Case Number: {variables.get('case_number', 'Not provided')}
+- Officers Involved: {variables.get('officer_names', 'Not provided')}
+
+Please log in to the Police Records Portal to review and assign this request.
+
+Contact Information:
+Shaker Heights Police Department
+Phone: {POLICE_PHONE}
+Email: {POLICE_EMAIL}
+        """
+    elif template_type == "assignment":
+        subject = f"Request Assigned: {variables.get('title')}"
+        content = f"""
+SHAKER HEIGHTS POLICE DEPARTMENT
+Assignment Notification
+
+You have been assigned a new records request.
+
+Request Details:
+- Title: {variables.get('title')}
+- Type: {variables.get('request_type', '').replace('_', ' ').title()}
+- Priority: {variables.get('priority', '').title()}
+- Request ID: {variables.get('request_id')}
+- Requester: {variables.get('requester_name')}
+- Contact: {variables.get('contact_phone', 'Not provided')}
+
+Additional Details:
+- Incident Date: {variables.get('incident_date', 'Not provided')}
+- Incident Location: {variables.get('incident_location', 'Not provided')}
+- Case Number: {variables.get('case_number', 'Not provided')}
+
+Please log in to the Police Records Portal to review and process this request.
+
+Contact Information:
+Phone: {POLICE_PHONE}
+Email: {POLICE_EMAIL}
+        """
+    elif template_type == "status_update":
+        subject = f"Request Update: {variables.get('title')}"
+        content = f"""
+SHAKER HEIGHTS POLICE DEPARTMENT
+Request Status Update
+
+Your records request status has been updated.
+
+Request Details:
+- Title: {variables.get('title')}
+- Previous Status: {variables.get('old_status', '').replace('_', ' ').title()}
+- New Status: {variables.get('new_status', '').replace('_', ' ').title()}
+- Request ID: {variables.get('request_id')}
+
+Please log in to the Police Records Portal to view the latest updates.
+
+If you have questions, contact us:
+Phone: {POLICE_PHONE}
+Email: {POLICE_EMAIL}
+
+Shaker Heights Police Department
+        """
+    
+    await send_email(to_email, subject, content)
+
 async def send_new_request_notification(request: RecordRequest, user: User):
     """Send notification when new request is created"""
-    subject = f"New Records Request: {request.title}"
-    content = f"""
-    A new records request has been submitted.
-    
-    Request Details:
-    - Title: {request.title}
-    - Type: {request.request_type.replace('_', ' ').title()}
-    - Priority: {request.priority.title()}
-    - Submitted by: {user.full_name}
-    - Submitted at: {request.created_at.strftime('%Y-%m-%d %H:%M')}
-    
-    Please log in to the Police Records Portal to review and assign this request.
-    """
+    variables = {
+        'title': request.title,
+        'request_type': request.request_type,
+        'priority': request.priority,
+        'requester_name': user.full_name,
+        'contact_phone': request.contact_phone or 'Not provided',
+        'created_at': request.created_at.strftime('%Y-%m-%d %H:%M'),
+        'incident_date': request.incident_date or 'Not provided',
+        'incident_location': request.incident_location or 'Not provided',
+        'case_number': request.case_number or 'Not provided',
+        'officer_names': request.officer_names or 'Not provided',
+        'police_phone': POLICE_PHONE,
+        'police_email': POLICE_EMAIL
+    }
     
     # Send to all admins
     admin_users = await db.users.find({"role": "admin"}).to_list(None)
     for admin in admin_users:
-        await send_email(admin["email"], subject, content)
+        await send_templated_email(admin["email"], "new_request", variables)
 
 async def send_assignment_notification(request: RecordRequest, staff_user: dict):
     """Send notification when request is assigned to staff"""
-    subject = f"Request Assigned: {request.title}"
-    content = f"""
-    You have been assigned a new records request.
+    variables = {
+        'title': request.title,
+        'request_type': request.request_type,
+        'priority': request.priority,
+        'request_id': request.id,
+        'requester_name': request.requester_name or 'Unknown',
+        'contact_phone': request.contact_phone or 'Not provided',
+        'incident_date': request.incident_date or 'Not provided',
+        'incident_location': request.incident_location or 'Not provided',
+        'case_number': request.case_number or 'Not provided',
+        'police_phone': POLICE_PHONE,
+        'police_email': POLICE_EMAIL
+    }
     
-    Request Details:
-    - Title: {request.title}
-    - Type: {request.request_type.replace('_', ' ').title()}
-    - Priority: {request.priority.title()}
-    - Request ID: {request.id}
-    
-    Please log in to the Police Records Portal to review and process this request.
-    """
-    
-    await send_email(staff_user["email"], subject, content)
+    await send_templated_email(staff_user["email"], "assignment", variables)
 
 async def send_status_update_notification(request: RecordRequest, user: dict, old_status: str, new_status: str):
     """Send notification when request status changes"""
-    subject = f"Request Update: {request.title}"
-    content = f"""
-    Your records request status has been updated.
+    variables = {
+        'title': request.title,
+        'old_status': old_status,
+        'new_status': new_status,
+        'request_id': request.id,
+        'police_phone': POLICE_PHONE,
+        'police_email': POLICE_EMAIL
+    }
     
-    Request Details:
-    - Title: {request.title}
-    - Previous Status: {old_status.replace('_', ' ').title()}
-    - New Status: {new_status.replace('_', ' ').title()}
-    - Request ID: {request.id}
-    
-    Please log in to the Police Records Portal to view the latest updates.
-    """
-    
-    await send_email(user["email"], subject, content)
+    await send_templated_email(user["email"], "status_update", variables)
 
-# PDF Generation function (keeping existing implementation)
+# PDF Generation (keeping existing implementation)
 def generate_request_pdf(request_data: dict, user_data: dict, messages: List[dict] = None):
     """Generate PDF report for a request"""
     buffer = io.BytesIO()
@@ -330,7 +505,13 @@ def generate_request_pdf(request_data: dict, user_data: dict, messages: List[dic
         spaceAfter=30,
         alignment=1  # Center alignment
     )
-    story.append(Paragraph("Police Department Records Request", title_style))
+    story.append(Paragraph("Shaker Heights Police Department", title_style))
+    story.append(Paragraph("Records Request Report", title_style))
+    story.append(Spacer(1, 20))
+    
+    # Contact Information
+    story.append(Paragraph(f"Phone: {POLICE_PHONE}", styles['Normal']))
+    story.append(Paragraph(f"Email: {POLICE_EMAIL}", styles['Normal']))
     story.append(Spacer(1, 20))
     
     # Request Information
@@ -345,6 +526,18 @@ def generate_request_pdf(request_data: dict, user_data: dict, messages: List[dic
         ["Submitted:", request_data['created_at'][:19]],
         ["Last Updated:", request_data['updated_at'][:19]],
     ]
+    
+    # Add enhanced details if available
+    if request_data.get('incident_date'):
+        request_info.append(["Incident Date:", request_data['incident_date']])
+    if request_data.get('incident_location'):
+        request_info.append(["Location:", request_data['incident_location']])
+    if request_data.get('case_number'):
+        request_info.append(["Case Number:", request_data['case_number']])
+    if request_data.get('officer_names'):
+        request_info.append(["Officers:", request_data['officer_names']])
+    if request_data.get('contact_phone'):
+        request_info.append(["Contact Phone:", request_data['contact_phone']])
     
     request_table = Table(request_info, colWidths=[2*inch, 4*inch])
     request_table.setStyle(TableStyle([
@@ -381,6 +574,12 @@ def generate_request_pdf(request_data: dict, user_data: dict, messages: List[dic
     story.append(Paragraph("Request Description", styles['Heading2']))
     story.append(Paragraph(request_data['description'], styles['Normal']))
     story.append(Spacer(1, 20))
+    
+    # Additional Details
+    if request_data.get('additional_details'):
+        story.append(Paragraph("Additional Details", styles['Heading2']))
+        story.append(Paragraph(request_data['additional_details'], styles['Normal']))
+        story.append(Spacer(1, 20))
     
     # Messages if provided
     if messages:
@@ -442,7 +641,7 @@ async def login(user_data: UserLogin):
     
     return Token(access_token=access_token, token_type="bearer", user=user_obj)
 
-# ADMIN ROUTES - NEW
+# ADMIN ROUTES - ENHANCED
 @api_router.post("/admin/create-staff", response_model=User)
 async def create_staff_user(user_data: UserCreate, current_user: User = Depends(get_current_user)):
     """Admin-only route to create staff users"""
@@ -470,13 +669,55 @@ async def create_staff_user(user_data: UserCreate, current_user: User = Depends(
     
     return new_user
 
+@api_router.put("/admin/users/{user_id}", response_model=User)
+async def update_user(user_id: str, user_update: UserUpdate, current_user: User = Depends(get_current_user)):
+    """Admin-only route to update user information"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can update users")
+    
+    # Check if user exists
+    existing_user = await db.users.find_one({"id": user_id})
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update user
+    update_data = {k: v for k, v in user_update.dict().items() if v is not None}
+    if update_data:
+        update_data = prepare_for_mongo(update_data)
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    # Return updated user
+    updated_user = await db.users.find_one({"id": user_id})
+    return User(**updated_user)
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, current_user: User = Depends(get_current_user)):
+    """Admin-only route to delete/deactivate user"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can delete users")
+    
+    # Don't allow deleting self
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    # Deactivate user instead of deleting
+    result = await db.users.update_one(
+        {"id": user_id}, 
+        {"$set": {"is_active": False}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User deactivated successfully"}
+
 @api_router.get("/admin/staff-members", response_model=List[StaffUser])
 async def get_staff_members(current_user: User = Depends(get_current_user)):
     """Get all staff members with their workload"""
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only admins can view staff members")
     
-    staff_users = await db.users.find({"role": "staff"}).to_list(None)
+    staff_users = await db.users.find({"role": {"$in": ["staff", "admin"]}}).to_list(None)
     staff_list = []
     
     for staff in staff_users:
@@ -491,7 +732,8 @@ async def get_staff_members(current_user: User = Depends(get_current_user)):
             full_name=staff["full_name"],
             email=staff["email"],
             assigned_requests=assigned_count,
-            completed_requests=completed_count
+            completed_requests=completed_count,
+            is_active=staff.get("is_active", True)
         ))
     
     return staff_list
@@ -552,6 +794,98 @@ async def get_unassigned_requests(current_user: User = Depends(get_current_user)
         enhanced_requests.append(req)
     
     return enhanced_requests
+
+# EMAIL TEMPLATE ROUTES
+@api_router.get("/admin/email-templates", response_model=List[EmailTemplate])
+async def get_email_templates(current_user: User = Depends(get_current_user)):
+    """Get all email templates"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can manage email templates")
+    
+    templates = await db.email_templates.find().to_list(None)
+    return [EmailTemplate(**template) for template in templates]
+
+@api_router.post("/admin/email-templates", response_model=EmailTemplate)
+async def create_email_template(template_data: EmailTemplateCreate, current_user: User = Depends(get_current_user)):
+    """Create new email template"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can manage email templates")
+    
+    # Deactivate existing template of same type
+    await db.email_templates.update_many(
+        {"template_type": template_data.template_type},
+        {"$set": {"is_active": False}}
+    )
+    
+    new_template = EmailTemplate(**template_data.dict())
+    template_doc = prepare_for_mongo(new_template.dict())
+    
+    await db.email_templates.insert_one(template_doc)
+    
+    return new_template
+
+@api_router.put("/admin/email-templates/{template_id}", response_model=EmailTemplate)
+async def update_email_template(template_id: str, template_data: EmailTemplateCreate, current_user: User = Depends(get_current_user)):
+    """Update email template"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can manage email templates")
+    
+    update_data = prepare_for_mongo(template_data.dict())
+    result = await db.email_templates.update_one(
+        {"id": template_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    updated_template = await db.email_templates.find_one({"id": template_id})
+    return EmailTemplate(**updated_template)
+
+@api_router.post("/admin/test-email")
+async def test_email_template(template_id: str, test_email: str, current_user: User = Depends(get_current_user)):
+    """Test email template with sample data"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can test email templates")
+    
+    template = await db.email_templates.find_one({"id": template_id})
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Sample variables for testing
+    test_variables = {
+        'title': 'Sample Police Report Request',
+        'request_type': 'police_report',
+        'priority': 'high',
+        'requester_name': 'John Doe',
+        'contact_phone': '(216) 491-1220',
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'incident_date': '2024-01-15',
+        'incident_location': '123 Main Street, Shaker Heights',
+        'case_number': 'PD-2024-001234',
+        'officer_names': 'Officer Smith, Officer Johnson',
+        'request_id': 'test-12345',
+        'old_status': 'pending',
+        'new_status': 'assigned',
+        'police_phone': POLICE_PHONE,
+        'police_email': POLICE_EMAIL
+    }
+    
+    # Render template
+    subject_template = Template(template["subject"])
+    content_template = Template(template["content"])
+    
+    subject = subject_template.render(**test_variables)
+    content = content_template.render(**test_variables)
+    
+    html_content = None
+    if template.get("html_content"):
+        html_template = Template(template["html_content"])
+        html_content = html_template.render(**test_variables)
+    
+    await send_email(test_email, f"[TEST] {subject}", content, html_content)
+    
+    return {"message": "Test email sent successfully"}
 
 # File Upload Routes (existing)
 @api_router.post("/upload/{request_id}")
@@ -642,7 +976,7 @@ async def get_request_files(request_id: str, current_user: User = Depends(get_cu
     files = await db.files.find({"request_id": request_id}).to_list(None)
     return [FileUpload(**file) for file in files]
 
-# Request Routes
+# Request Routes - ENHANCED
 @api_router.post("/requests", response_model=RecordRequest)
 async def create_request(request_data: RecordRequestCreate, current_user: User = Depends(get_current_user)):
     request_dict = request_data.dict()
@@ -671,7 +1005,7 @@ async def create_request(request_data: RecordRequestCreate, current_user: User =
 @api_router.get("/requests", response_model=List[RecordRequest])
 async def get_requests(current_user: User = Depends(get_current_user)):
     if current_user.role == UserRole.ADMIN:
-        # Admins see all requests
+        # Admins see all requests with enhanced details
         requests = await db.requests.find().to_list(None)
     elif current_user.role == UserRole.STAFF:
         # Staff see assigned requests and unassigned requests
@@ -685,13 +1019,42 @@ async def get_requests(current_user: User = Depends(get_current_user)):
         # Users see only their own requests
         requests = await db.requests.find({"user_id": current_user.id}).to_list(None)
     
-    return [RecordRequest(**req) for req in requests]
+    # Enhance requests with additional information
+    enhanced_requests = []
+    for req in requests:
+        # Get requester information
+        requester = await db.users.find_one({"id": req["user_id"]})
+        if requester:
+            req["requester_name"] = requester["full_name"]
+            req["requester_email"] = requester["email"]
+        
+        # Get assigned staff information
+        if req.get("assigned_staff_id"):
+            staff = await db.users.find_one({"id": req["assigned_staff_id"]})
+            if staff:
+                req["assigned_staff_name"] = staff["full_name"]
+        
+        enhanced_requests.append(RecordRequest(**req))
+    
+    return enhanced_requests
 
 @api_router.get("/requests/{request_id}", response_model=RecordRequest)
 async def get_request(request_id: str, current_user: User = Depends(get_current_user)):
     request = await db.requests.find_one({"id": request_id})
     if not request:
         raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Enhance with user information
+    requester = await db.users.find_one({"id": request["user_id"]})
+    if requester:
+        request["requester_name"] = requester["full_name"]
+        request["requester_email"] = requester["email"]
+    
+    # Enhance with staff information
+    if request.get("assigned_staff_id"):
+        staff = await db.users.find_one({"id": request["assigned_staff_id"]})
+        if staff:
+            request["assigned_staff_name"] = staff["full_name"]
     
     request_obj = RecordRequest(**request)
     
@@ -702,6 +1065,49 @@ async def get_request(request_id: str, current_user: User = Depends(get_current_
         raise HTTPException(status_code=403, detail="Access denied")
     
     return request_obj
+
+@api_router.put("/requests/{request_id}", response_model=RecordRequest)
+async def update_request(request_id: str, request_update: RecordRequestUpdate, current_user: User = Depends(get_current_user)):
+    """Update request details (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can edit requests")
+    
+    # Check if request exists
+    existing_request = await db.requests.find_one({"id": request_id})
+    if not existing_request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Update request
+    update_data = {k: v for k, v in request_update.dict().items() if v is not None}
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        update_data = prepare_for_mongo(update_data)
+        await db.requests.update_one({"id": request_id}, {"$set": update_data})
+    
+    # Return updated request
+    updated_request = await db.requests.find_one({"id": request_id})
+    return RecordRequest(**updated_request)
+
+@api_router.delete("/requests/{request_id}")
+async def delete_request(request_id: str, current_user: User = Depends(get_current_user)):
+    """Delete request (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can delete requests")
+    
+    # Check if request exists
+    existing_request = await db.requests.find_one({"id": request_id})
+    if not existing_request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Delete related files, messages, and notifications
+    await db.files.delete_many({"request_id": request_id})
+    await db.messages.delete_many({"request_id": request_id})
+    await db.notifications.delete_many({"message": {"$regex": existing_request["title"]}})
+    
+    # Delete request
+    await db.requests.delete_one({"id": request_id})
+    
+    return {"message": "Request deleted successfully"}
 
 @api_router.post("/requests/{request_id}/assign", response_model=dict)
 async def assign_request(request_id: str, assignment: RequestAssignment, current_user: User = Depends(get_current_user)):
@@ -715,7 +1121,7 @@ async def assign_request(request_id: str, assignment: RequestAssignment, current
         raise HTTPException(status_code=404, detail="Request not found")
     
     # Validate staff user exists
-    staff_user = await db.users.find_one({"id": assignment.staff_id, "role": "staff"})
+    staff_user = await db.users.find_one({"id": assignment.staff_id, "role": {"$in": ["staff", "admin"]}})
     if not staff_user:
         raise HTTPException(status_code=404, detail="Staff user not found")
     
@@ -784,7 +1190,7 @@ async def update_request_status(request_id: str, new_status: RequestStatus, curr
     
     return {"message": "Status updated successfully"}
 
-# Export Routes
+# Export Routes (existing implementation with enhanced details)
 @api_router.get("/export/request/{request_id}/pdf")
 async def export_request_pdf(request_id: str, current_user: User = Depends(get_current_user)):
     # Get request
@@ -841,6 +1247,12 @@ async def export_requests_csv(current_user: User = Depends(get_current_user)):
             "Priority": req["priority"],
             "Requester Name": requester["full_name"] if requester else "Unknown",
             "Requester Email": requester["email"] if requester else "Unknown",
+            "Contact Phone": req.get("contact_phone", ""),
+            "Incident Date": req.get("incident_date", ""),
+            "Incident Location": req.get("incident_location", ""),
+            "Case Number": req.get("case_number", ""),
+            "Officers": req.get("officer_names", ""),
+            "Vehicle Info": req.get("vehicle_info", ""),
             "Assigned Staff": assigned_staff["full_name"] if assigned_staff else "Unassigned",
             "Staff Email": assigned_staff["email"] if assigned_staff else "",
             "Created At": req["created_at"],
@@ -857,7 +1269,7 @@ async def export_requests_csv(current_user: User = Depends(get_current_user)):
     return StreamingResponse(
         io.StringIO(csv_content),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=master_requests_export.csv"}
+        headers={"Content-Disposition": "attachment; filename=shaker_pd_master_requests.csv"}
     )
 
 # Analytics Routes (existing)
@@ -927,7 +1339,7 @@ async def get_analytics_dashboard(current_user: User = Depends(get_current_user)
     
     # Staff workload
     staff_workload = []
-    staff_users = await db.users.find({"role": "staff"}).to_list(None)
+    staff_users = await db.users.find({"role": {"$in": ["staff", "admin"]}}).to_list(None)
     for staff in staff_users:
         assigned_count = await db.requests.count_documents({"assigned_staff_id": staff["id"]})
         completed_count = await db.requests.count_documents({
@@ -1047,6 +1459,16 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
             "total_requests": my_requests,
             "pending_requests": pending_requests
         }
+
+# Contact Info Route
+@api_router.get("/contact-info")
+async def get_contact_info():
+    """Get police department contact information"""
+    return {
+        "phone": POLICE_PHONE,
+        "email": POLICE_EMAIL,
+        "address": POLICE_ADDRESS
+    }
 
 # Include the router in the main app
 app.include_router(api_router)
