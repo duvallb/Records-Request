@@ -282,7 +282,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Staff communication system"
+    - "All high priority tasks completed"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
