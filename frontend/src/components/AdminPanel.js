@@ -19,7 +19,9 @@ import {
   Download,
   UserCheck,
   Mail,
-  Search
+  Search,
+  Palette,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
