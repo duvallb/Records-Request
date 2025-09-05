@@ -527,25 +527,32 @@ const AdminPanel = () => {
                         />
                       </div>
                       
-                      <Badge 
-                        variant="outline" 
-                        className={`capitalize ${
-                          user.role === 'admin' ? 'border-red-200 text-red-700' : 
-                          user.role === 'staff' ? 'border-blue-200 text-blue-700' : 
-                          'border-green-200 text-green-700'
-                        }`}
-                      >
-                        {user.role}
-                      </Badge>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Status</Label>
+                        <Badge 
+                          variant="outline" 
+                          className={`capitalize ${
+                            user.role === 'admin' ? 'border-red-200 text-red-700' : 
+                            user.role === 'staff' ? 'border-blue-200 text-blue-700' : 
+                            'border-green-200 text-green-700'
+                          }`}
+                        >
+                          {user.role}
+                        </Badge>
+                      </div>
                       
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteUser(user.id, user.full_name)}
-                        className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
-                      >
-                        Delete
-                      </Button>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Actions</Label>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteUser(user.id, user.full_name)}
+                          className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400 flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
