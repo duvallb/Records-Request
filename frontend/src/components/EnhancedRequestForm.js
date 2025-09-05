@@ -149,9 +149,16 @@ const EnhancedRequestForm = () => {
 
       const submitData = {
         title: formData.title,
-        description: enhancedDescription,
+        description: formData.description,
         request_type: formData.request_type,
-        priority: formData.priority
+        priority: formData.priority,
+        // Send enhanced fields separately
+        incident_date: formData.incident_date,
+        incident_location: formData.incident_location,
+        case_number: formData.case_number,
+        officer_names: formData.officer_names,
+        vehicle_info: formData.vehicle_info,
+        additional_details: formData.additional_details
       };
 
       const response = await axios.post(`${API}/requests`, submitData);
