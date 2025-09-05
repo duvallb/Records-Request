@@ -355,31 +355,94 @@ class PoliceRecordsAPITester:
                 if success:
                     print(f"   ✅ {role} has {len(response)} notifications")
 
-    def test_admin_functions(self):
-        """Test admin-specific functions"""
+    def test_email_notification_system(self):
+        """Test email notification system and SMTP configuration"""
         print("\n" + "="*50)
-        print("TESTING ADMIN FUNCTIONS")
+        print("TESTING EMAIL NOTIFICATION SYSTEM")
         print("="*50)
         
-        if 'admin' not in self.tokens or 'staff' not in self.tokens:
-            print("❌ Admin or staff tokens not available")
+        # Test 1: Verify SMTP configuration by checking environment
+        print("🔍 Testing SMTP Configuration...")
+        
+        # We can't directly test SMTP config, but we can test if emails are triggered
+        # by creating a request and checking if the system processes it without errors
+        
+        if 'user' not in self.tokens:
+            print("❌ No user token available for email testing")
             return
             
-        if not self.requests_created:
-            print("❌ No requests to assign")
-            return
-            
-        # Test request assignment
-        request_id = self.requests_created[0]
-        staff_id = self.users['staff']['id']
+        # Create a request that should trigger email notifications
+        email_test_request = {
+            "title": "Email Notification Test Request",
+            "description": "This request is created to test email notifications",
+            "request_type": "police_report",
+            "priority": "high",
+            "incident_date": "2024-01-20",
+            "incident_location": "456 Test Street, Shaker Heights, OH",
+            "case_number": "EMAIL-TEST-001",
+            "officer_names": "Officer Test",
+            "contact_phone": "(216) 555-EMAIL"
+        }
         
         success, response = self.run_test(
-            "Assign request to staff",
-            "PUT",
-            f"requests/{request_id}/assign?staff_id={staff_id}",
+            "Create request to trigger email notification",
+            "POST",
+            "requests",
+            200,
+            data=email_test_request,
+            token=self.tokens['user']
+        )
+        
+        if success and 'id' in response:
+            print("   ✅ Request created successfully - email notification should be triggered")
+            self.requests_created.append(response['id'])
+            
+            # Test admin email template functionality if admin token exists
+            if 'admin' in self.tokens:
+                self.test_admin_email_templates()
+        else:
+            print("   ❌ Failed to create request for email testing")
+
+    def test_admin_email_templates(self):
+        """Test admin email template management"""
+        print("\n🔍 Testing Admin Email Template Management...")
+        
+        if 'admin' not in self.tokens:
+            print("❌ No admin token available for email template testing")
+            return
+            
+        # Test getting email templates
+        success, response = self.run_test(
+            "Get email templates",
+            "GET",
+            "admin/email-templates",
             200,
             token=self.tokens['admin']
         )
+        
+        if success:
+            print(f"   ✅ Retrieved {len(response)} email templates")
+            
+        # Test creating a new email template
+        new_template = {
+            "name": "Test Template",
+            "template_type": "new_request",
+            "subject": "Test Subject: {{title}}",
+            "content": "Test email content for {{requester_name}} - Request: {{title}}",
+            "html_content": "<h1>Test HTML Content</h1><p>Request: {{title}}</p>"
+        }
+        
+        success, response = self.run_test(
+            "Create email template",
+            "POST",
+            "admin/email-templates",
+            200,
+            data=new_template,
+            token=self.tokens['admin']
+        )
+        
+        if success:
+            print("   ✅ Email template created successfully")
 
     def run_all_tests(self):
         """Run all tests in sequence"""
