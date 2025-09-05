@@ -136,7 +136,7 @@ backend:
         comment: "Request creation endpoint exists and appears functional"
       - working: true
         agent: "testing"
-        comment: "Comprehensive testing completed: POST /api/requests endpoint successfully accepts and stores all enhanced fields (incident_date, incident_time, incident_location, case_number, officer_names, vehicle_info, additional_details, contact_phone). All fields verified to be stored and retrieved correctly."
+        comment: "All enhanced fields (incident_date, incident_location, case_number, officer_names, vehicle_info, additional_details) working correctly"
 
   - task: "Request retrieval endpoint with enhanced details"
     implemented: true
