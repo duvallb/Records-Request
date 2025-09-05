@@ -75,6 +75,11 @@ const PublicRoute = ({ children }) => {
   return !user ? children : <Navigate to="/dashboard" />;
 };
 
+// Home Route Component (accessible to all users)
+const HomeRoute = ({ children }) => {
+  return children; // Always allow access to home/welcome page
+};
+
 function App() {
   return (
     <AuthProvider>
