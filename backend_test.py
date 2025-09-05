@@ -258,23 +258,69 @@ class PoliceRecordsAPITester:
             print("   ❌ Failed to retrieve request for verification")
 
     def test_get_requests(self):
-        """Test retrieving requests with role-based access"""
+        """Test retrieving requests with role-based access and filtering"""
         print("\n" + "="*50)
-        print("TESTING REQUEST RETRIEVAL")
+        print("TESTING REQUEST RETRIEVAL WITH ROLE-BASED FILTERING")
         print("="*50)
         
-        for role in ['user', 'staff', 'admin']:
-            if role in self.tokens:
-                success, response = self.run_test(
-                    f"Get requests as {role}",
-                    "GET",
-                    "requests",
-                    200,
-                    token=self.tokens[role]
-                )
+        # Test user access - should only see their own requests
+        if 'user' in self.tokens:
+            success, response = self.run_test(
+                "Get requests as user (should see own requests only)",
+                "GET",
+                "requests",
+                200,
+                token=self.tokens['user']
+            )
+            
+            if success:
+                user_id = self.users['user']['id']
+                user_requests = [req for req in response if req.get('user_id') == user_id]
+                print(f"   ✅ User can see {len(response)} requests (all should be their own)")
                 
-                if success:
-                    print(f"   ✅ {role} can see {len(response)} requests")
+                # Verify all requests belong to the user
+                if all(req.get('user_id') == user_id for req in response):
+                    print("   ✅ User filtering working correctly - only sees own requests")
+                else:
+                    print("   ❌ User filtering failed - seeing other users' requests")
+        
+        # Test staff access - should see assigned and unassigned requests
+        if 'staff' in self.tokens:
+            success, response = self.run_test(
+                "Get requests as staff (should see assigned + unassigned)",
+                "GET",
+                "requests",
+                200,
+                token=self.tokens['staff']
+            )
+            
+            if success:
+                staff_id = self.users['staff']['id']
+                assigned_to_staff = [req for req in response if req.get('assigned_staff_id') == staff_id]
+                unassigned = [req for req in response if req.get('assigned_staff_id') is None]
+                print(f"   ✅ Staff can see {len(response)} requests")
+                print(f"   - Assigned to staff: {len(assigned_to_staff)}")
+                print(f"   - Unassigned: {len(unassigned)}")
+        
+        # Test admin access - should see all requests
+        if 'admin' in self.tokens:
+            success, response = self.run_test(
+                "Get requests as admin (should see all requests)",
+                "GET",
+                "requests",
+                200,
+                token=self.tokens['admin']
+            )
+            
+            if success:
+                print(f"   ✅ Admin can see {len(response)} requests (all requests)")
+                
+                # Verify enhanced fields are included in response
+                if response and len(response) > 0:
+                    first_request = response[0]
+                    enhanced_fields = ['incident_date', 'incident_location', 'case_number', 'officer_names']
+                    fields_present = [field for field in enhanced_fields if field in first_request]
+                    print(f"   ✅ Enhanced fields present in response: {fields_present}")
 
     def test_get_specific_request(self):
         """Test getting specific request details"""
