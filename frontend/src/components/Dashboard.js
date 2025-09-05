@@ -425,6 +425,14 @@ const Dashboard = () => {
                   <CardDescription>Manage and track your records requests</CardDescription>
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={loading}
+                  >
+                    {loading ? 'Loading...' : 'Refresh'}
+                  </Button>
                   <Button 
                     onClick={() => navigate('/request/new')}
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
