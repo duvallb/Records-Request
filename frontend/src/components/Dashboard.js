@@ -353,8 +353,20 @@ const Dashboard = () => {
             {/* Recent Requests */}
             <Card className="glass border-0 shadow-lg">
               <CardHeader>
-                <CardTitle>Recent Requests</CardTitle>
-                <CardDescription>Your latest records requests</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Recent Requests</CardTitle>
+                    <CardDescription>Your latest records requests</CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={loading}
+                  >
+                    {loading ? 'Loading...' : 'Refresh'}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
