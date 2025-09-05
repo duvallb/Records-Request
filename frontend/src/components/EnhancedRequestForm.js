@@ -134,18 +134,6 @@ const EnhancedRequestForm = () => {
     setLoading(true);
 
     try {
-      // Combine all form data for description
-      let enhancedDescription = formData.description;
-      
-      if (formData.incident_date || formData.incident_location || formData.case_number) {
-        enhancedDescription += '\n\nAdditional Information:\n';
-        if (formData.incident_date) enhancedDescription += `Date of Incident: ${formData.incident_date}\n`;
-        if (formData.incident_location) enhancedDescription += `Location: ${formData.incident_location}\n`;
-        if (formData.case_number) enhancedDescription += `Case/Report Number: ${formData.case_number}\n`;
-        if (formData.officer_names) enhancedDescription += `Officer(s) Involved: ${formData.officer_names}\n`;
-        if (formData.vehicle_info) enhancedDescription += `Vehicle Information: ${formData.vehicle_info}\n`;
-        if (formData.additional_details) enhancedDescription += `Additional Details: ${formData.additional_details}\n`;
-      }
 
       const submitData = {
         title: formData.title,
