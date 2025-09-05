@@ -190,6 +190,22 @@ const AdminPanel = () => {
     }
   };
 
+  // New function to delete user
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Are you sure you want to permanently delete the user "${userName}"? This will also delete all their requests and associated data. This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/admin/users/${userId}`);
+      toast.success('User deleted successfully');
+      fetchAdminData(); // Refresh data
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to delete user';
+      toast.error(errorMessage);
+    }
+  };
+
   const exportMasterList = async () => {
     try {
       const response = await axios.get(`${API}/export/requests/csv`, {
