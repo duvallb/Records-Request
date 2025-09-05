@@ -299,9 +299,8 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Admin Panel Request Display Fix"
-  stuck_tasks: 
-    - "Admin Panel Request Display Fix"
+    - "All critical issues resolved"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
