@@ -688,6 +688,112 @@ Email: #{police_email}`
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Email Templates Tab */}
+        <TabsContent value="email-templates" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="w-5 h-5" />
+                    Email Template Design Mode
+                  </CardTitle>
+                  <CardDescription>
+                    Customize email notification templates sent to users and staff
+                  </CardDescription>
+                </div>
+                <Button onClick={handleSaveEmailTemplate} disabled={savingTemplate}>
+                  <Save className="w-4 h-4 mr-2" />
+                  {savingTemplate ? 'Saving...' : 'Save Templates'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Template Selector */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Select Template to Edit</Label>
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new_request">New Request Notification</SelectItem>
+                    <SelectItem value="assignment_notification">Staff Assignment</SelectItem>
+                    <SelectItem value="status_update">Status Update</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Template Editor */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Email Subject</Label>
+                  <Input
+                    value={emailTemplates[selectedTemplate].subject}
+                    onChange={(e) => handleTemplateChange(selectedTemplate, 'subject', e.target.value)}
+                    placeholder="Enter email subject..."
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Email Body</Label>
+                  <textarea
+                    value={emailTemplates[selectedTemplate].body}
+                    onChange={(e) => handleTemplateChange(selectedTemplate, 'body', e.target.value)}
+                    placeholder="Enter email body..."
+                    rows={16}
+                    className="w-full p-3 border border-gray-300 rounded-md font-mono text-sm resize-y"
+                  />
+                </div>
+              </div>
+
+              {/* Template Variables Guide */}
+              <div className="bg-slate-50 p-4 rounded-lg border">
+                <h4 className="font-medium text-slate-800 mb-3">Available Template Variables</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <h5 className="font-medium text-slate-700 mb-2">Request Variables:</h5>
+                    <ul className="space-y-1 text-slate-600">
+                      <li><code className="bg-slate-200 px-1 rounded">#{{request_id}}</code> - Unique request ID</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{request_type}}</code> - Type of request</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{priority}}</code> - Request priority</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{description}}</code> - Request description</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{status}}</code> - Current status</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-slate-700 mb-2">User Variables:</h5>
+                    <ul className="space-y-1 text-slate-600">
+                      <li><code className="bg-slate-200 px-1 rounded">#{{requester_name}}</code> - Person who submitted</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{requester_email}}</code> - Requester's email</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{staff_name}}</code> - Assigned staff member</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{police_phone}}</code> - Department phone</li>
+                      <li><code className="bg-slate-200 px-1 rounded">#{{police_email}}</code> - Department email</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview Section */}
+              <div className="bg-white border rounded-lg p-4">
+                <h4 className="font-medium text-slate-800 mb-3">Template Preview</h4>
+                <div className="bg-slate-50 p-4 rounded border">
+                  <div className="mb-2">
+                    <strong>Subject:</strong> {emailTemplates[selectedTemplate].subject}
+                  </div>
+                  <div>
+                    <strong>Body:</strong>
+                    <pre className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+                      {emailTemplates[selectedTemplate].body}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Email Configuration Notice */}
