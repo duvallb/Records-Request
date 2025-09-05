@@ -444,6 +444,65 @@ class PoliceRecordsAPITester:
         if success:
             print("   ✅ Email template created successfully")
 
+    def test_admin_functions(self):
+        """Test admin-specific functions"""
+        print("\n" + "="*50)
+        print("TESTING ADMIN FUNCTIONS")
+        print("="*50)
+        
+        if 'admin' not in self.tokens or 'staff' not in self.tokens:
+            print("❌ Admin or staff tokens not available")
+            return
+            
+        if not self.requests_created:
+            print("❌ No requests to assign")
+            return
+            
+        # Test request assignment
+        request_id = self.requests_created[0]
+        staff_id = self.users['staff']['id']
+        
+        assignment_data = {
+            "request_id": request_id,
+            "staff_id": staff_id
+        }
+        
+        success, response = self.run_test(
+            "Assign request to staff",
+            "POST",
+            f"requests/{request_id}/assign",
+            200,
+            data=assignment_data,
+            token=self.tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ Request assigned successfully")
+            
+        # Test getting staff members
+        success, response = self.run_test(
+            "Get staff members",
+            "GET",
+            "admin/staff-members",
+            200,
+            token=self.tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ Retrieved {len(response)} staff members")
+            
+        # Test getting unassigned requests
+        success, response = self.run_test(
+            "Get unassigned requests",
+            "GET",
+            "admin/unassigned-requests",
+            200,
+            token=self.tokens['admin']
+        )
+        
+        if success:
+            print(f"   ✅ Retrieved {len(response)} unassigned requests")
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting Police Records API Testing")
