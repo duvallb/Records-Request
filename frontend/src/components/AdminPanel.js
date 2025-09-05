@@ -999,7 +999,7 @@ const EmailTemplateViewer = ({ template }) => (
   </div>
 );
 
-// Email Template Editor Component
+// Email Template Editor Component with WYSIWYG
 const EmailTemplateEditor = ({ template, onSave, onCancel }) => {
   const [subject, setSubject] = useState(template.subject);
   const [content, setContent] = useState(template.content);
@@ -1011,6 +1011,30 @@ const EmailTemplateEditor = ({ template, onSave, onCancel }) => {
     }
     onSave(subject, content);
   };
+
+  // Quill modules configuration
+  const modules = {
+    toolbar: [
+      [{ 'header': '1'}, {'header': '2'}, { 'font': [] }],
+      [{size: []}],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{'list': 'ordered'}, {'list': 'bullet'}, 
+       {'indent': '-1'}, {'indent': '+1'}],
+      ['link', 'image', 'video'],
+      ['clean']
+    ],
+    clipboard: {
+      // toggle to add extra line breaks when pasting HTML:
+      matchVisual: false,
+    }
+  };
+
+  const formats = [
+    'header', 'font', 'size',
+    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'list', 'bullet', 'indent',
+    'link', 'image', 'video'
+  ];
 
   return (
     <div className="space-y-4">
@@ -1026,17 +1050,47 @@ const EmailTemplateEditor = ({ template, onSave, onCancel }) => {
       </div>
       <div>
         <Label htmlFor="content" className="text-sm font-medium">Content:</Label>
-        <textarea
-          id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="mt-1 w-full h-64 p-3 border border-slate-200 rounded-md focus:border-blue-500 focus:ring-blue-500"
-          placeholder="Email content with {variables}"
-        />
+        <div className="mt-1 border rounded-md">
+          <ReactQuill
+            theme="snow"
+            value={content}
+            onChange={setContent}
+            modules={modules}
+            formats={formats}
+            placeholder="Email content with {variables}. You can format text, add images, and use HTML styling..."
+            style={{ height: '300px', marginBottom: '42px' }}
+          />
+        </div>
       </div>
-      <div className="flex gap-2">
-        <Button onClick={handleSave}>Save Template</Button>
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+      
+      {/* Template Variables Quick Insert */}
+      <div className="bg-blue-50 p-3 rounded-md">
+        <Label className="text-sm font-medium text-blue-900">Quick Insert Variables:</Label>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {['{title}', '{user_name}', '{request_type}', '{priority}', '{created_at}', '{request_id}'].map((variable) => (
+            <Button
+              key={variable}
+              size="sm"
+              variant="outline"
+              className="text-xs"
+              onClick={() => {
+                const newContent = content + ' ' + variable;
+                setContent(newContent);
+              }}
+            >
+              {variable}
+            </Button>
+          ))}
+        </div>
+      </div>
+      
+      <div className="flex gap-2 mt-6">
+        <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
+          Save Template
+        </Button>
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
       </div>
     </div>
   );
