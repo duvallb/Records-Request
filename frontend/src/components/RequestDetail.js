@@ -297,6 +297,61 @@ const RequestDetail = () => {
                   </div>
                 </div>
 
+                {/* Enhanced Details Section */}
+                {(request.incident_date || request.incident_location || request.case_number || 
+                  request.officer_names || request.vehicle_info || request.additional_details) && (
+                  <div>
+                    <Label className="text-sm font-medium text-slate-700 mb-3 block">
+                      Incident Details
+                    </Label>
+                    <div className="bg-slate-50 p-4 rounded-lg border space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {request.incident_date && (
+                          <div>
+                            <Label className="text-xs font-medium text-slate-600">Date of Incident</Label>
+                            <p className="text-slate-800 font-medium">{request.incident_date}</p>
+                          </div>
+                        )}
+                        
+                        {request.incident_location && (
+                          <div>
+                            <Label className="text-xs font-medium text-slate-600">Location</Label>
+                            <p className="text-slate-800 font-medium">{request.incident_location}</p>
+                          </div>
+                        )}
+                        
+                        {request.case_number && (
+                          <div>
+                            <Label className="text-xs font-medium text-slate-600">Case/Report Number</Label>
+                            <p className="text-slate-800 font-medium">{request.case_number}</p>
+                          </div>
+                        )}
+                        
+                        {request.officer_names && (
+                          <div>
+                            <Label className="text-xs font-medium text-slate-600">Officer(s) Involved</Label>
+                            <p className="text-slate-800 font-medium">{request.officer_names}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {request.vehicle_info && (
+                        <div>
+                          <Label className="text-xs font-medium text-slate-600">Vehicle Information</Label>
+                          <p className="text-slate-800 font-medium">{request.vehicle_info}</p>
+                        </div>
+                      )}
+                      
+                      {request.additional_details && (
+                        <div>
+                          <Label className="text-xs font-medium text-slate-600">Additional Details</Label>
+                          <p className="text-slate-800 font-medium whitespace-pre-wrap">{request.additional_details}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Status Management for Staff/Admin */}
                 {canUpdateStatus() && (
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
