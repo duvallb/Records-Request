@@ -61,7 +61,8 @@ const AdminPanel = () => {
         axios.get(`${API}/admin/staff-members`),
         axios.get(`${API}/admin/requests-master-list`),
         axios.get(`${API}/admin/unassigned-requests`),
-        axios.get(`${API}/admin/users`)
+        axios.get(`${API}/admin/users`),
+        axios.get(`${API}/admin/email-templates`)
       ]);
 
       // Handle staff members
@@ -97,6 +98,14 @@ const AdminPanel = () => {
       } else {
         console.error('All users failed:', results[3].reason);
         setAllUsers([]);
+      }
+
+      // Handle email templates
+      if (results[4].status === 'fulfilled') {
+        setEmailTemplates(results[4].value.data || {});
+      } else {
+        console.error('Email templates failed:', results[4].reason);
+        setEmailTemplates({});
       }
 
     } catch (error) {
