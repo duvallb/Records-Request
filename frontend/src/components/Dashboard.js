@@ -42,6 +42,16 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
+  // Add effect to refresh when navigating back to dashboard
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchDashboardData();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const fetchDashboardData = async () => {
     try {
       const [requestsRes, statsRes, notificationsRes] = await Promise.all([
@@ -59,6 +69,12 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Add manual refresh function
+  const handleRefresh = () => {
+    setLoading(true);
+    fetchDashboardData();
   };
 
   const exportRequestAsPDF = async (requestId) => {
