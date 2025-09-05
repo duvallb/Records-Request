@@ -42,6 +42,11 @@ const AdminPanel = () => {
   });
   const [creatingStaff, setCreatingStaff] = useState(false);
 
+  // Email templates state
+  const [emailTemplates, setEmailTemplates] = useState({});
+  const [selectedTemplate, setSelectedTemplate] = useState('new_request');
+  const [editingTemplate, setEditingTemplate] = useState(false);
+
   const { API } = useContext(AuthContext);
 
   useEffect(() => {
