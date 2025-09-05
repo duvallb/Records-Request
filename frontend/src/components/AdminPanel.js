@@ -220,6 +220,35 @@ const AdminPanel = () => {
     }
   };
 
+  // Email template management functions
+  const handleUpdateEmailTemplate = async (templateType, subject, content) => {
+    try {
+      await axios.put(`${API}/admin/email-templates/${templateType}`, {
+        subject,
+        content
+      });
+      toast.success('Email template updated successfully');
+      fetchAdminData(); // Refresh templates
+      setEditingTemplate(false);
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to update template';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleTestEmailTemplate = async (templateType, testEmail) => {
+    try {
+      await axios.post(`${API}/admin/test-email-template`, {
+        template_type: templateType,
+        test_email: testEmail
+      });
+      toast.success('Test email sent successfully');
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to send test email';
+      toast.error(errorMessage);
+    }
+  };
+
   const exportMasterList = async () => {
     try {
       const response = await axios.get(`${API}/export/requests/csv`, {
