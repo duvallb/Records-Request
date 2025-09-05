@@ -5,7 +5,7 @@ import io
 from datetime import datetime
 
 class EnhancedPoliceRecordsAPITester:
-    def __init__(self, base_url="https://law-records-portal.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://pd-requests.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tokens = {}  # Store tokens for different users
         self.users = {}   # Store user data
