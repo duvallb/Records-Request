@@ -42,6 +42,73 @@ const AdminPanel = () => {
     role: 'staff'
   });
   const [creatingStaff, setCreatingStaff] = useState(false);
+  
+  // Email template management
+  const [emailTemplates, setEmailTemplates] = useState({
+    new_request: {
+      subject: 'New Records Request Submitted - #{request_id}',
+      body: `Dear Administrator,
+
+A new records request has been submitted to the Police Department Records Portal.
+
+Request Details:
+- Request ID: #{request_id}
+- Submitted by: #{requester_name} (#{requester_email})
+- Request Type: #{request_type}
+- Priority: #{priority}
+- Submitted on: #{created_at}
+
+Description:
+#{description}
+
+Please log into the admin panel to review and assign this request.
+
+Best regards,
+Shaker Heights Police Department
+Phone: #{police_phone}
+Email: #{police_email}`
+    },
+    assignment_notification: {
+      subject: 'Request Assigned - #{request_id}',
+      body: `Dear #{staff_name},
+
+You have been assigned a new records request.
+
+Request Details:
+- Request ID: #{request_id}
+- Submitted by: #{requester_name}
+- Request Type: #{request_type}
+- Priority: #{priority}
+- Description: #{description}
+
+Please log into the staff portal to review and process this request.
+
+Best regards,
+Shaker Heights Police Department`
+    },
+    status_update: {
+      subject: 'Request Status Update - #{request_id}',
+      body: `Dear #{requester_name},
+
+Your records request status has been updated.
+
+Request Details:
+- Request ID: #{request_id}
+- New Status: #{status}
+- Updated on: #{updated_at}
+
+#{status_message}
+
+You can view the full details of your request by logging into the portal.
+
+Best regards,
+Shaker Heights Police Department
+Phone: #{police_phone}
+Email: #{police_email}`
+    }
+  });
+  const [selectedTemplate, setSelectedTemplate] = useState('new_request');
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   const { API } = useContext(AuthContext);
 
